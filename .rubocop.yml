@@ -1,0 +1,67 @@
+AllCops:
+  TargetRubyVersion: 2.4
+  Include:
+    - lib/**/*.rb
+    - tests/**/*.rb
+    - zonefile.gemspec
+
+Style/StringLiterals:
+  EnforcedStyle: double_quotes
+
+Style/FrozenStringLiteralComment:
+  Enabled: false
+
+Style/RegexpLiteral:
+  EnforcedStyle: mixed
+  AllowInnerSlashes: false
+
+Style/BlockDelimiters:
+  EnforcedStyle: semantic
+  AllowBracesOnProceduralOneLiners: true
+
+Style/NumericLiterals:
+  # we're dealing mostly with dates/timestamps, so grouping
+  # by thousands is not useful here
+  Enabled: false
+
+Style/GlobalVars:
+  Exclude:
+    - "tests/**/*.rb"
+
+Metrics/ClassLength:
+  Enabled: false
+
+Layout/SpaceInsideBlockBraces:
+  SpaceBeforeBlockParameters: false
+
+Style/TrailingCommaInHashLiteral:
+  EnforcedStyleForMultiline: comma
+
+Layout/IndentFirstHashElement:
+  EnforcedStyle: consistent
+
+Style/BracesAroundHashParameters:
+  EnforcedStyle: context_dependent
+
+Layout/MultilineMethodCallIndentation:
+  EnforcedStyle: indented
+
+Layout/AlignArguments:
+  EnforcedStyle: with_fixed_indentation
+
+Layout/AlignHash:
+  EnforcedHashRocketStyle: table
+  EnforcedColonStyle: table
+  EnforcedLastArgumentHashStyle: always_inspect
+
+
+## TODOs
+
+Metrics/AbcSize:              { Enabled: false }
+Metrics/CyclomaticComplexity: { Enabled: false } # rewrite in 2.0
+Metrics/LineLength:           { Enabled: false }
+Metrics/MethodLength:         { Enabled: false }
+Metrics/ModuleLength:         { Enabled: false }
+Metrics/PerceivedComplexity:  { Enabled: false } # rewrite in 2.0
+Style/ClassVars:              { Enabled: false }
+Style/PerlBackrefs:           { Enabled: false } # rewrite with Regexp#match
