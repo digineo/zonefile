@@ -177,12 +177,16 @@ class Zonefile
   def initialize(zonefile = "", file_name = nil, origin = nil)
     @data = zonefile
     @filename = file_name
-    @origin = origin || (file_name ? file_name.split("/").last : "")
+    self.origin = origin || (file_name ? file_name.split("/").last : "")
 
     @records = {}
     @soa = {}
     RECORDS.each {|r| @records[r] = [] }
     parse
+  end
+
+  def origin=(val)
+    @origin = val.chomp(".")
   end
 
   # True if no records (except sao) is defined in this file
@@ -224,7 +228,7 @@ class Zonefile
 
   def parse_line(line)
     if (origin = Parser::DIRECTIVE_ORIGIN.match(line))
-      @origin = origin
+      self.origin = origin
     elsif (ttl = Parser::DIRECTIVE_TTL.match(line))
       @ttl = ttl
     elsif (data = Parser::SOA.match(line))
@@ -640,6 +644,9 @@ class Zonefile
       ; Database file #{@filename || 'unknown'} for #{@origin || 'unknown'} zone.
       ; Zone version: #{soa[:serial]}
       ;
+      #{@origin ? "$ORIGIN #{@origin}." : ''}
+      #{@ttl ? "$TTL #{@ttl}" : ''}
+
       #{soa[:origin]}\t#{soa[:ttl]}\tIN\tSOA\t(
       \t\t\t\t\t#{soa[:primary]}\t; primary
       \t\t\t\t\t#{soa[:email]}\t; email
@@ -649,9 +656,6 @@ class Zonefile
       \t\t\t\t\t#{soa[:expire]}\t; expire
       \t\t\t\t\t#{soa[:minimumTTL]}\t; minimum TTL
       \t\t\t\t)
-
-      #{@origin ? "$ORIGIN #{@origin}" : ''}
-      #{@ttl ? "$TTL #{@ttl}" : ''}
     ENDH
 
     {
