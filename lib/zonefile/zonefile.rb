@@ -181,6 +181,8 @@ class Zonefile
 
     @records = {}
     @soa = {}
+    @lastname = nil
+    @ttl = nil
     RECORDS.each {|r| @records[r] = [] }
     parse
   end
@@ -202,7 +204,7 @@ class Zonefile
       @lastname = data[:name] if data[:name].to_s != ""
       data[:name] = @lastname if data[:name].to_s == ""
     end
-    @records[type.downcase.intern] << data
+    @records[type] << data
   end
 
   # Generates a new serial number in the format of YYYYMMDDII if possible
