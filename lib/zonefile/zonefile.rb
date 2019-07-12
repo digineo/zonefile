@@ -111,14 +111,16 @@ class Zonefile
 
   @@preserve_name = true
 
-  # For compatibility: This can switches off copying of the :name from the
+  # For compatibility: This switches off copying of the :name from the
   # previous record in a zonefile if found omitted.
-  # This was zonefile's behavior in <= 1.03 .
+  #
+  # This was zonefile's behavior in < v1.04.
+  #
+  # Deprecation warning: This is marked for removal in v2.0
   def self.preserve_name(do_preserve_name)
-    @@preserve_name = do_preserve_name
-  end
+    return unless (@@preserve_name = do_preserve_name)
 
-
+    warn "Zonefile::preserve_name is deprecated and marked for removal in v2.0"
   end
 
   # Compact a zonefile content - removes empty lines, comments,
@@ -219,7 +221,7 @@ class Zonefile
   end
 
   def parse
-    Zonefile.simplify(@data).each_line do |line|
+    self.class.simplify(@data).each_line do |line|
       parse_line(line)
     end
   end
