@@ -46,6 +46,8 @@
 #   - :name, :ttl, :class, :order, :preference, :flags, :service, :regexp, :replacement
 # * SPF
 #   - :name, :ttl, :class, :text
+# * SPF
+#   - :name, :ttl, :class, :flag, :tag, :value
 #
 # == Examples
 #
@@ -105,7 +107,7 @@
 #
 class Zonefile
   RECORDS = %i[
-    a a4 cname dnskey ds mx naptr ns nsec nsec3 nsec3param ptr rrsig soa spf srv tlsa txt
+    a a4 caa cname dnskey ds mx naptr ns nsec nsec3 nsec3param ptr rrsig soa spf srv tlsa txt
   ].freeze
 
   attr_reader :records
@@ -378,6 +380,22 @@ class Zonefile
       }
     end
 
+    CAA = Matcher.new :caa, %r{
+      #{PREFIX_OPT_NAME} CAA \s+
+      (?<flag>\d+) \s+
+      (?<tag>issue|issuewild|iodef) \s+
+      (?<value>.*)$
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        flag:  m[:flag].to_i,
+        tag:   m[:tag],
+        value: m[:value].strip,
+      }
+    end
+
     CNAME = Matcher.new :cname, %r{
       #{PREFIX_OPT_NAME} CNAME \s
       (?<host>#{VALID_NAME})
@@ -641,6 +659,7 @@ class Zonefile
       mx:         ["MX",         :pri, :host],
       a:          ["A",          :host],
       a4:         ["AAAA",       :host],
+      caa:        ["CAA",        :flag, :tag, :value],
       cname:      ["CNAME",      :host],
       txt:        ["TXT",        :text],
       spf:        ["SPF",        :text],

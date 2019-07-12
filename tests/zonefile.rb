@@ -309,4 +309,23 @@ SIGNATURE
 
     run_again_with_zf_output!
   end
+
+  def test_caa
+    assert_equal "example.com.", @zf.caa[0][:name]
+    assert_equal 0, @zf.caa[0][:flag]
+    assert_equal "issue", @zf.caa[0][:tag]
+    assert_equal '"ca.example.com"', @zf.caa[0][:value]
+
+    assert_equal "example.com.", @zf.caa[1][:name]
+    assert_equal 0, @zf.caa[1][:flag]
+    assert_equal "iodef", @zf.caa[1][:tag]
+    assert_equal '"mailto:security@example.com"', @zf.caa[1][:value]
+
+    assert_equal "host.example.com.", @zf.caa[2][:name]
+    assert_equal 0, @zf.caa[2][:flag]
+    assert_equal "issue", @zf.caa[2][:tag]
+    assert_equal '";"', @zf.caa[2][:value]
+
+    run_again_with_zf_output!
+  end
 end
