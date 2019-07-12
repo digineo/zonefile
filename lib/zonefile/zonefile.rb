@@ -166,6 +166,11 @@ class Zonefile
     normalized.delete_if {|line| line.empty? || line[0].chr == ";" }.join("\n")
   end
 
+  # Create a new object by reading the content of a file
+  def self.from_file(file_name, origin = nil)
+    Zonefile.new(File.read(file_name), file_name.split("/").last, origin)
+  end
+
   # create a new zonefile object by passing the content of the zonefile
   def initialize(zonefile = "", file_name = nil, origin = nil)
     @data = zonefile
@@ -184,11 +189,6 @@ class Zonefile
       return false unless @records[r].empty?
     end
     true
-  end
-
-  # Create a new object by reading the content of a file
-  def self.from_file(file_name, origin = nil)
-    Zonefile.new(File.read(file_name), file_name.split("/").last, origin)
   end
 
   def add_record(type, data = {})
@@ -212,6 +212,24 @@ class Zonefile
     serial = format("%<base>s00", base: base).to_i
     serial += 1 while serial <= @soa[:serial].to_i
     @soa[:serial] = serial.to_s
+  end
+
+  def parse
+    Zonefile.simplify(@data).each_line do |line|
+      parse_line(line)
+    end
+  end
+
+  def parse_line(line)
+    if (origin = Parser::DIRECTIVE_ORIGIN.match(line))
+      @origin = origin
+    elsif (ttl = Parser::DIRECTIVE_TTL.match(line))
+      @ttl = ttl
+    elsif (data = Parser::SOA.match(line))
+      @soa.merge! data
+    elsif (name, data = Parser::Matcher.find_for(line))
+      add_record name, data
+    end
   end
 
   module Parser
@@ -348,9 +366,9 @@ class Zonefile
       }
     end
 
-    CNAME = Matcher.new :cname, %r{
-      #{PREFIX_OPT_NAME} CNAME \s
-      (?<host>#{VALID_NAME})
+    AAAA = Matcher.new :a4, %r{
+      #{PREFIX_OPT_NAME} AAAA \s
+      (?<host>#{VALID_IP6})$
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -360,9 +378,9 @@ class Zonefile
       }
     end
 
-    AAAA = Matcher.new :a4, %r{
-      #{PREFIX_OPT_NAME} AAAA \s
-      (?<host>#{VALID_IP6})$
+    CNAME = Matcher.new :cname, %r{
+      #{PREFIX_OPT_NAME} CNAME \s
+      (?<host>#{VALID_NAME})
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -597,24 +615,6 @@ class Zonefile
   end
   private_constant :Parser
 
-  def parse_line(line)
-    if (origin = Parser::DIRECTIVE_ORIGIN.match(line))
-      @origin = origin
-    elsif (ttl = Parser::DIRECTIVE_TTL.match(line))
-      @ttl = ttl
-    elsif (data = Parser::SOA.match(line))
-      @soa.merge! data
-    elsif (name, data = Parser::Matcher.find_for(line))
-      add_record name, data
-    end
-  end
-
-  def parse
-    Zonefile.simplify(@data).each_line do |line|
-      parse_line(line)
-    end
-  end
-
   # Build a new nicely formatted Zonefile
   def output
     out = <<~ENDH
@@ -640,8 +640,8 @@ class Zonefile
       ns:         ["NS",         :host],
       mx:         ["MX",         :pri, :host],
       a:          ["A",          :host],
-      cname:      ["CNAME",      :host],
       a4:         ["AAAA",       :host],
+      cname:      ["CNAME",      :host],
       txt:        ["TXT",        :text],
       spf:        ["SPF",        :text],
       srv:        ["SRV",        :pri, :weight, :port, :host],
