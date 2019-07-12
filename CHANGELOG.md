@@ -1,5 +1,6 @@
 # 1.99
 
+- add CAA record support
 - cleanup repository
 - deprecate `Zonefile.preserve_name`
 

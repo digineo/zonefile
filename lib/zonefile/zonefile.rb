@@ -665,6 +665,25 @@ class Zonefile
     out
   end
 
+  RR = Struct.new(:name, :ttl, :class, :type, :data)
+
+  # returns a list of RR instances for further processing
+  def resource_records
+    rr_soa = RR.new(soa[:origin], soa[:ttl], "IN", "SOA")
+    rr_soa.data = %i[primary email serial refresh retry expire minimumTTL].map {|f|
+      soa[f]
+    }.join("\t")
+
+    RECORDS.each_with_object(soa: rr_soa) do |(name, (type, *fields)), rrs|
+      @records[name].each do |item|
+        rr = RR.new(item[:name], item[:ttl], item[:class], "IN", type)
+        rr.data = fields.map {|f| item[f] }.join("\t")
+        rrs[type] ||= []
+        rrs[type] << rr
+      end
+    end
+  end
+
   private
 
   def format_rr(name, type, *fields)
