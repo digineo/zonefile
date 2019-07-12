@@ -75,20 +75,6 @@ zf.new_serial
 puts "New Zonefile: \n#{zf.output}"
 ```
 
-# Name attribute magic
-
-Since 1.04 the `:name` attribute is preserved and returned as defined
-in a previous record if a zonefile entry omits it. This should be the
-expected behavior for most users.
-
-You can switch this off globally by calling
-
-```ruby
-Zonefile.preserve_name(false)
-```
-
-This behaviour is deprecated in v1.99 and will be removed in v2.0
-
 # License
 
 MIT License

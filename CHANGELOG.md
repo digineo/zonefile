@@ -1,3 +1,7 @@
+# 2.0.0
+
+- remove `Zonefile.preserve_name`
+
 # 1.99
 
 - add CAA record support
