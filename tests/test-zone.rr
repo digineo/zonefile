@@ -1,0 +1,39 @@
+@	3600	IN	SOA	ns0.dns-zoneparse-test.net.	support.dns-zoneparse-test.net.	2000100501	10800	3600	691200	86400
+	43200	IN	NS	ns0.dns-zoneparse-test.net.
+@		IN	NS	ns1.dns-zoneparse-test.net.
+@		IN	A	127.0.0.1
+localhost		IN	A	127.0.0.1
+mail		IN	A	127.0.0.1
+www		IN	A	127.0.0.1
+www		in	A	10.0.0.2
+www	43200	IN	A	10.0.0.3
+www			A	10.0.0.5
+foo		IN	A	10.0.0.6
+mini			A	10.0.0.7
+icarus		IN	AAAA	fe80::0260:83ff:fe7c:3a2a
+ftp		IN	CNAME	www
+example.com.		IN	CAA	0	issue	"ca.example.com"
+example.com.		IN	CAA	0	iodef	"mailto:security@example.com"
+host.example.com.		IN	CAA	0	issue	";"
+example.com.	86400	IN	DNSKEY	256	3	5	AQPSKmynfzW4kyBv015MUG2DeIQ3Cbl+BBZH4b/0PY1kxkmvHjcZc8nokfzj31GajIQKY+5CptLr3buXA10hWqTkF7H6RfoRqXQeogmMHfpftf6zMv1LyBUgia7za6ZEzOJBOztyvhjL742iU/TpPSEDhm2SNKLijfUppn1UaNvv4w==
+example.net.	86400	IN	DNSKEY	256	3	5	AQPSKmynfzW4kyBv015MUG2DeIQ3Cbl+BBZH4b/0PY1kxkmvHjcZc8nokfzj31GajIQKY+5CptLr3buXA10hWqTkF7H6RfoRqXQeogmMHfpftf6zMv1LyBUgia7za6ZEzOJBOztyvhjL742iU/TpPSEDhm2SNKLijfUppn1UaNvv4w==
+ds1		IN	DS	31528	5	1	2274EACD70C5CD6862E1C0262E99D48D9FDEC271
+ds2		IN	DS	31528	5	1	2BB183AF5F22588179A53B0A98631FAD1A292118
+@		IN	MX	10	mail
+www		IN	MX	10	10.0.0.4
+urn.example.com.		IN	NAPTR	100	50	"s"	"http+N2L+N2C+N2R"	""	www.example.com.
+alfa.example.com.	86400	IN	NSEC	host.example.com.	A MX RRSIG NSEC TYPE1234
+alfa.example.com.		IN	NSEC3	1	1	12	aabbccdd	2vptu5timamqttgl4luu7kg2leoaor3s	A RRSIG
+alfa.example.com.		IN	NSEC3PARAM	1	0	12	aabbccdd
+12.23.21.23.in-addr.arpa		IN	PTR	www.myhost.example.com.
+host.example.com.	86400	IN	RRSIG	A	5	3	86400	20030322173103	20030220173103	2642	example.com.	oJB1W6WNGv+ldvQ3WDG0MQkg5IEhjRip8WTrPYGv07h108dUKGMeDPKijVCHX3DDKdfb+v6oB9wfuh3DTJXUAfI/M0zmO/zz8bW0Rznl8O3tGNazPwQKkRN20XPXV6nwwfoXmJQbsLNrLfkGJ5D6fwFm8nN+6pBzeDQfsS3Ap3o=
+@		IN	SPF	"v=spf1 mx ~all"
+www			SPF	"v=spf1 -all"
+elsewhere		IN	SPF	"v=spf1 mx ?all"
+_sip._tcp.example.com.	86400	IN	SRV	0	5	5060	sipserver.example.com.
+_443._tcp.www.example.com.	86400	IN	TLSA	1	1	2	92003ba34942dc74152e2f2c408d29ec a5a520e7f2e06bb944f4dca346baf63c 1b177615d466f6c4b71c216a50292bd5 8c9ebdd2f74e38fe51ffd48c43326cbc 
+
+www			TXT	"web;server"
+soup		IN	TXT	"This is a text message"
+txta			TXT	"t=y; o=-"
+_kerberos		IN	TXT	maxnet.ao
