@@ -9,10 +9,10 @@ require "zonefile"
 $zf_output_shown = false
 
 class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
-  make_my_diffs_pretty!
+  # make_my_diffs_pretty!
 
   def setup
-    zonefile = ARGV[0] || Pathname.new(__dir__).join("test-zone.db")
+    zonefile = Pathname.new(__dir__).join("test-zone.db")
     @zf = Zonefile.from_file(zonefile.to_s, "test-origin")
   end
 
@@ -325,6 +325,22 @@ SIGNATURE
     assert_equal 0, @zf.caa[2][:flag]
     assert_equal "issue", @zf.caa[2][:tag]
     assert_equal '";"', @zf.caa[2][:value]
+
+    run_again_with_zf_output!
+  end
+
+  def test_resource_records
+    subject = @zf.resource_records
+
+    expected = Pathname.new(__dir__).join("test-zone.rr").read
+    actual = subject.each_with_object("") do |(k, rrs), str|
+      rrs = [rrs] if k == :soa
+      rrs.each do |rr|
+        str << [rr.name, rr.ttl, rr.class, rr.type, rr.data].join("\t") << "\n"
+      end
+    end
+
+    assert_equal expected, actual
 
     run_again_with_zf_output!
   end
