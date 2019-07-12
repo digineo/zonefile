@@ -214,320 +214,399 @@ class Zonefile
     @soa[:serial] = serial.to_s
   end
 
-  module RE
+  module Parser
+    # valid name literal
     VALID_NAME = /[-@._*a-zA-Z0-9]+/.freeze
+    # valid ipv6 address literal
     VALID_IP6  = /[-@._*a-zA-Z0-9:]+/.freeze # ??
+    # resource class literal
     RR_CLASS   = /\b(?:IN|HS|CH)\b/i.freeze
+    # resource TTL literal
     RR_TTL     = /(?:\d+[wdhms]?)+/i.freeze
-    TTL_CLS    = %r{
-      (?:(#{RR_TTL})\s)?
-      (?:(#{RR_CLASS})\s)?
-    }ox.freeze
+    # base64 string literal (maybe space separated)
     BASE64     = %r{ [a-zA-Z0-9+/\s]*={0,2} }x.freeze
-    HEXADEIMAL = /([\sa-fA-F0-9]*)/.freeze
-    QUOTED     = /(\"[^\"]*\")/.freeze
+    # hex string literal (maybe space separated)
+    HEX        = /[\sa-fA-F0-9]*/.freeze
+    # quoted string literal
+    QUOTED     = /\"[^\"]*\"/.freeze
 
-    DIRECTIVE_ORIGIN = /^\$ORIGIN\s*(#{VALID_NAME})/oi.freeze
-    DIRECTIVE_TTL    = /^\$TTL\s+(#{RR_TTL})/oi.freeze
-
-    SOA = %r{
-      ^(#{VALID_NAME}) \s+ #{TTL_CLS} \b SOA \s+ (#{VALID_NAME}) \s+
-      (#{VALID_NAME}) \s*
-      (#{RR_TTL}) \s+
-      (#{RR_TTL}) \s+
-      (#{RR_TTL}) \s+
-      (#{RR_TTL}) \s+
-      (#{RR_TTL}) \s*
+    # compound common prefix for many RRs (name is required)
+    PREFIX_REQ_NAME = %r{
+      ^
+      (?<name>#{VALID_NAME}) \s+
+      (?:(?<ttl>#{RR_TTL})\s+)?
+      (?:(?<class>#{RR_CLASS})\s+)?
+      \b
     }oix.freeze
 
-    NS = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b NS \s (#{VALID_NAME})
+    # compound common prefix for many RRs (name is optional)
+    PREFIX_OPT_NAME = %r{
+      ^
+      (?<name>#{VALID_NAME})? \s*
+      (?:(?<ttl>#{RR_TTL})\s+)?
+      (?:(?<class>#{RR_CLASS})\s+)?
+      \b
     }oix.freeze
 
-    A = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b A \s (#{VALID_NAME})
-    }oix.freeze
+    # Matcher is an internal helper class. Its constructor receives a
+    # regualar expression which defines the matching behaviour, and
+    # a block to extract matches into a Hash (most of the time; the
+    # type of the extracted data is not constrained).
+    class Matcher
+      def self.children
+        @children ||= []
+      end
 
-    CNAME = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b CNAME \s (#{VALID_NAME})
-    }oix.freeze
+      # Throws input against known Matchers and returns the name and
+      # extrated data (if one matched). Otherwise returns nil.
+      def self.find_for(input)
+        s = input.to_s
+        children.each do |m|
+          if (data = m.match(s))
+            return [m.name, data]
+          end
+        end
+        nil
+      end
 
-    AAAA = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b AAAA \s (#{VALID_IP6})$
-    }oix.freeze
+      attr_reader :name, :regexp, :block
 
-    MX = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b MX \s (\d+) \s (#{VALID_NAME})$
-    }oix.freeze
+      def initialize(name, regexp, &block)
+        self.class.children << self if name
+        @name   = name
+        @regexp = regexp
+        @block  = block
+      end
 
-    SRV = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b SRV \s
-      (\d+) \s
-      (\d+) \s
-      (\d+) \s
-      (#{VALID_NAME})
-    }oix.freeze
+      def match(input)
+        return unless (m = regexp.match(input))
 
-    DS = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b DS \s
-      (\d+) \s
-      (\w+) \s
-      (\d+) \s
-      #{HEXADEIMAL}
-    }oix.freeze
+        block.call(m)
+      end
+    end
 
-    NSEC = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b NSEC \s
-      (#{VALID_NAME}) \s
-      ([\s\w]*)
-    }oix.freeze
+    # origin directive
+    DIRECTIVE_ORIGIN = Matcher.new nil, %r{
+      ^\$ORIGIN \s+
+      (?<origin>#{VALID_NAME})
+    }oix.freeze do |m|
+      m[:origin]
+    end
 
-    NSEC3 = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b NSEC3 \s
-      (\d+) \s
-      (\d+) \s
-      (\d+) \s
-      (-|[A-F0-9]*) \s
-      ([A-Z2-7=]*) \s
-      ([\s\w]*)
-    }oix.freeze
+    # ttl directive
+    DIRECTIVE_TTL = Matcher.new nil, %r{
+      ^\$TTL \s+
+      (?<ttl>#{RR_TTL})
+    }oix.freeze do |m|
+      m[:ttl]
+    end
 
-    NSEC3PARAM = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b NSEC3PARAM \s
-      (\d+) \s
-      (\d+) \s
-      (\d+) \s
-      (-|[A-F0-9]*)
-    }oix.freeze
+    SOA = Matcher.new nil, %r{
+      #{PREFIX_REQ_NAME} SOA \s+
+      (?<primary>   #{VALID_NAME}) \s+
+      (?<email>     #{VALID_NAME}) \s*
+      (?<serial>    #{RR_TTL}) \s+
+      (?<refresh>   #{RR_TTL}) \s+
+      (?<retry>     #{RR_TTL}) \s+
+      (?<expire>    #{RR_TTL}) \s+
+      (?<minimumTTL>#{RR_TTL}) \s*
+    }oix.freeze do |m|
+      {
+        origin:     m[:name],
+        ttl:        m[:ttl] || "",
+        primary:    m[:primary],
+        email:      m[:email],
+        serial:     m[:serial],
+        refresh:    m[:refresh],
+        retry:      m[:retry],
+        expire:     m[:expire],
+        minimumTTL: m[:minimumTTL],
+      }
+    end
 
-    DNSKEY = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b DNSKEY \s
-      (\d+) \s
-      (\d+) \s
-      (\w+) \s
-      (#{BASE64})
-    }oix.freeze
+    NS = Matcher.new :ns, %r{
+      #{PREFIX_OPT_NAME} NS \s
+      (?<host>#{VALID_NAME})
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        host:  m[:host],
+      }
+    end
 
-    RRSIG = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b RRSIG \s
-      (\w+) \s
-      (\w+) \s
-      (\d+) \s
-      (\d+) \s
-      (\d+) \s
-      (\d+) \s
-      (\d+) \s
-      (#{VALID_NAME}) \s
-      (#{BASE64})
-    }oix.freeze
+    A = Matcher.new :a, %r{
+      #{PREFIX_OPT_NAME} A \s
+      (?<host>#{VALID_NAME})
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        host:  m[:host],
+      }
+    end
 
-    TLSA = %r{
-      ^(#{VALID_NAME}) \s* #{TTL_CLS} \b TLSA \s
-      (\d+) \s
-      (\d+) \s
-      (\d+) \s
-      (#{BASE64})
-    }oix.freeze
+    CNAME = Matcher.new :cname, %r{
+      #{PREFIX_OPT_NAME} CNAME \s
+      (?<host>#{VALID_NAME})
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        host:  m[:host],
+      }
+    end
 
-    NAPTR = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b NAPTR \s
-      (\d+) \s
-      (\d+) \s
-      #{QUOTED} \s
-      #{QUOTED} \s
-      #{QUOTED} \s
-      (#{VALID_NAME})
-    }oix.freeze
+    AAAA = Matcher.new :a4, %r{
+      #{PREFIX_OPT_NAME} AAAA \s
+      (?<host>#{VALID_IP6})$
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        host:  m[:host],
+      }
+    end
 
-    PTR = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b PTR \s+ (#{VALID_NAME})$
-    }oix.freeze
+    MX = Matcher.new :mx, %r{
+      #{PREFIX_OPT_NAME} MX \s
+      (?<pri>\d+) \s
+      (?<host>#{VALID_NAME})$
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        host:  m[:host],
+        pri:   m[:pri].to_i,
+      }
+    end
 
-    TXT = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b TXT \s+ (.*)$
-    }oix.freeze
+    SRV = Matcher.new :srv, %r{
+      #{PREFIX_OPT_NAME} SRV \s
+      (?<pri>\d+) \s
+      (?<weight>\d+) \s
+      (?<port>\d+) \s
+      (?<host>#{VALID_NAME})
+    }oix.freeze do |m|
+      {
+        name:   m[:name],
+        ttl:    m[:ttl],
+        class:  m[:class],
+        pri:    m[:pri],
+        weight: m[:weight],
+        port:   m[:port],
+        host:   m[:host],
+      }
+    end
 
-    SPF = %r{
-      ^(#{VALID_NAME})? \s* #{TTL_CLS} \b SPF \s+ (.*)$
-    }oix.freeze
+    DS = Matcher.new :ds, %r{
+      #{PREFIX_OPT_NAME} DS \s
+      (?<key_tag>\d+) \s
+      (?<algorithm>\w+) \s
+      (?<digest_type>\d+) \s
+      (?<digest>#{HEX})
+    }oix.freeze do |m|
+      {
+        name:        m[:name],
+        ttl:         m[:ttl],
+        class:       m[:class],
+        key_tag:     m[:key_tag].to_i,
+        algorithm:   m[:algorithm],
+        digest_type: m[:digest_type].to_i,
+        digest:      m[:digest].gsub(/\s/, ""),
+      }
+    end
+
+    NSEC = Matcher.new :nsec, %r{
+      #{PREFIX_OPT_NAME} NSEC \s
+      (?<next>#{VALID_NAME}) \s
+      (?<types>[\s\w]*)
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        next:  m[:next],
+        types: m[:types].strip,
+      }
+    end
+
+    NSEC3 = Matcher.new :nsec3, %r{
+      #{PREFIX_OPT_NAME} NSEC3 \s
+      (?<algorithm>\d+) \s
+      (?<flags>\d+) \s
+      (?<iterations>\d+) \s
+      (?<salt>-|[A-F0-9]*) \s
+      (?<next>[A-Z2-7=]*) \s
+      (?<types>[\s\w]*)
+    }oix.freeze do |m|
+      {
+        name:       m[:name],
+        ttl:        m[:ttl],
+        class:      m[:class],
+        algorithm:  m[:algorithm],
+        flags:      m[:flags],
+        iterations: m[:iterations],
+        salt:       m[:salt],
+        next:       m[:next].strip,
+        types:      m[:types].strip,
+      }
+    end
+
+    NSEC3PARAM = Matcher.new :nsec3param, %r{
+      #{PREFIX_OPT_NAME} NSEC3PARAM \s
+      (?<algorithm>\d+) \s
+      (?<flags>\d+) \s
+      (?<iterations>\d+) \s
+      (?<salt>-|[A-F0-9]*)
+    }oix.freeze do |m|
+      {
+        name:       m[:name],
+        ttl:        m[:ttl],
+        class:      m[:class],
+        algorithm:  m[:algorithm],
+        flags:      m[:flags],
+        iterations: m[:iterations],
+        salt:       m[:salt],
+      }
+    end
+
+    DNSKEY = Matcher.new :dnskey, %r{
+      #{PREFIX_OPT_NAME} DNSKEY \s
+      (?<flag>\d+) \s
+      (?<protocol>\d+) \s
+      (?<algorithm>\w+) \s
+      (?<pubkey>#{BASE64})
+    }oix.freeze do |m|
+      {
+        name:       m[:name],
+        ttl:        m[:ttl],
+        class:      m[:class],
+        flag:       m[:flag].to_i,
+        protocol:   m[:protocol].to_i,
+        algorithm:  m[:algorithm],
+        public_key: m[:pubkey].gsub(/\s+/, ""),
+      }
+    end
+
+    RRSIG = Matcher.new :rrsig, %r{
+      #{PREFIX_OPT_NAME} RRSIG \s
+      (?<type_covered>\w+) \s
+      (?<algorithm>\w+) \s
+      (?<labels>\d+) \s
+      (?<original_ttl>\d+) \s
+      (?<expiration>\d+) \s
+      (?<inception>\d+) \s
+      (?<key_tag>\d+) \s
+      (?<signer>#{VALID_NAME}) \s
+      (?<signature>#{BASE64})
+    }oix.freeze do |m|
+      {
+        name:         m[:name],
+        ttl:          m[:ttl],
+        class:        m[:class],
+        type_covered: m[:type_covered],
+        algorithm:    m[:algorithm],
+        labels:       m[:labels].to_i,
+        original_ttl: m[:original_ttl].to_i,
+        expiration:   m[:expiration].to_i,
+        inception:    m[:inception].to_i,
+        key_tag:      m[:key_tag].to_i,
+        signer:       m[:signer],
+        signature:    m[:signature].gsub(/\s/, ""),
+      }
+    end
+
+    TLSA = Matcher.new :tlsa, %r{
+      #{PREFIX_REQ_NAME} TLSA \s
+      (?<usage>\d+) \s
+      (?<selector>\d+) \s
+      (?<type>\d+) \s
+      (?<data>#{BASE64})
+    }oix.freeze do |m|
+      {
+        name:              m[:name],
+        ttl:               m[:ttl],
+        class:             m[:class],
+        certificate_usage: m[:usage].to_i,
+        selector:          m[:selector].to_i,
+        matching_type:     m[:type].to_i,
+        data:              m[:data],
+      }
+    end
+
+    NAPTR = Matcher.new :naptr, %r{
+      #{PREFIX_OPT_NAME} NAPTR \s
+      (?<order>\d+) \s
+      (?<preference>\d+) \s
+      (?<flags>#{QUOTED}) \s
+      (?<service>#{QUOTED}) \s
+      (?<regexp>#{QUOTED}) \s
+      (?<replacement>#{VALID_NAME})
+    }oix.freeze do |m|
+      {
+        name:        m[:name],
+        ttl:         m[:ttl],
+        class:       m[:class],
+        order:       m[:order].to_i,
+        preference:  m[:preference].to_i,
+        flags:       m[:flags],
+        service:     m[:service],
+        regexp:      m[:regexp],
+        replacement: m[:replacement],
+      }
+    end
+
+    PTR = Matcher.new :ptr, %r{
+      #{PREFIX_OPT_NAME} PTR \s+ (?<host>#{VALID_NAME})$
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        host:  m[:host],
+      }
+    end
+
+    TXT = Matcher.new :txt, %r{
+      #{PREFIX_OPT_NAME} TXT \s+ (?<text>.*)$
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        text:  m[:text].strip,
+      }
+    end
+
+    SPF = Matcher.new :spf, %r{
+      #{PREFIX_OPT_NAME} SPF \s+ (?<text>.*)$
+    }oix.freeze do |m|
+      {
+        name:  m[:name],
+        ttl:   m[:ttl],
+        class: m[:class],
+        text:  m[:text].strip,
+      }
+    end
   end
-  private_constant :RE
+  private_constant :Parser
 
   def parse_line(line)
-    # rubocop:disable Style/BracesAroundHashParameters
-    case line
-    when RE::DIRECTIVE_ORIGIN
-      @origin = $1
-    when RE::DIRECTIVE_TTL
-      @ttl = $1
-    when RE::SOA
-      @soa.merge!({
-        origin:     $1,
-        ttl:        @soa[:ttl] || $2 || "",
-        primary:    $4,
-        email:      $5,
-        serial:     $6,
-        refresh:    $7,
-        retry:      $8,
-        expire:     $9,
-        minimumTTL: $10,
-      })
-    when RE::NS
-      add_record("ns", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        host:  $4,
-      })
-    when RE::A
-      add_record("a", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        host:  $4,
-      })
-    when RE::AAAA
-      add_record("a4", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        host:  $4,
-      })
-    when RE::CNAME
-      add_record("cname", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        host:  $4,
-      })
-    when RE::PTR
-      add_record("ptr", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        host:  $4,
-      })
-    when RE::DNSKEY
-      add_record("dnskey", {
-        name:       $1,
-        ttl:        $2,
-        class:      $3,
-        flag:       $4.to_i,
-        protocol:   $5.to_i,
-        algorithm:  $6,
-        public_key: $7.gsub(/\s/, ""),
-      })
-    when RE::DS
-      add_record("ds", {
-        name:        $1,
-        ttl:         $2,
-        class:       $3,
-        key_tag:     $4.to_i,
-        algorithm:   $5,
-        digest_type: $6.to_i,
-        digest:      $7.gsub(/\s/, ""),
-      })
-    when RE::MX
-      add_record("mx", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        pri:   $4.to_i,
-        host:  $5,
-      })
-    when RE::NAPTR
-      add_record("naptr", {
-        name:        $1,
-        ttl:         $2,
-        class:       $3,
-        order:       $4.to_i,
-        preference:  $5.to_i,
-        flags:       $6,
-        service:     $7,
-        regexp:      $8,
-        replacement: $9,
-      })
-    when RE::NSEC
-      add_record("nsec", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        next:  $4,
-        types: $5.strip,
-      })
-    when RE::NSEC3
-      add_record("nsec3", {
-        name:       $1,
-        ttl:        $2,
-        class:      $3,
-        algorithm:  $4,
-        flags:      $5,
-        iterations: $6,
-        salt:       $7,
-        next:       $8.strip,
-        types:      $9.strip,
-      })
-    when RE::NSEC3PARAM
-      add_record("nsec3param", {
-        name:       $1,
-        ttl:        $2,
-        class:      $3,
-        algorithm:  $4,
-        flags:      $5,
-        iterations: $6,
-        salt:       $7,
-      })
-    when RE::RRSIG
-      add_record("rrsig", {
-        name:         $1,
-        ttl:          $2,
-        class:        $3,
-        type_covered: $4,
-        algorithm:    $5,
-        labels:       $6.to_i,
-        original_ttl: $7.to_i,
-        expiration:   $8.to_i,
-        inception:    $9.to_i,
-        key_tag:      $10.to_i,
-        signer:       $11,
-        signature:    $12.gsub(/\s/, ""),
-      })
-    when RE::SPF
-      add_record("spf", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        text:  $4.strip,
-      })
-    when RE::SRV
-      add_record("srv", {
-        name:   $1,
-        ttl:    $2,
-        class:  $3,
-        pri:    $4,
-        weight: $5,
-        port:   $6,
-        host:   $7,
-      })
-    when RE::TLSA
-      add_record("tlsa", {
-        name:              $1,
-        ttl:               $2,
-        class:             $3,
-        certificate_usage: $4.to_i,
-        selector:          $5.to_i,
-        matching_type:     $6.to_i,
-        data:              $7,
-      })
-    when RE::TXT
-      add_record("txt", {
-        name:  $1,
-        ttl:   $2,
-        class: $3,
-        text:  $4.strip,
-      })
+    if (origin = Parser::DIRECTIVE_ORIGIN.match(line))
+      @origin = origin
+    elsif (ttl = Parser::DIRECTIVE_TTL.match(line))
+      @ttl = ttl
+    elsif (data = Parser::SOA.match(line))
+      @soa.merge! data
+    elsif (name, data = Parser::Matcher.find_for(line))
+      add_record name, data
     end
-    # rubocop:enable Style/BracesAroundHashParameters
   end
 
   def parse
