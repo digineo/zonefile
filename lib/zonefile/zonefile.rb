@@ -619,16 +619,18 @@ class Zonefile
   def output
     out = <<~ENDH
       ;
-      ;  Database file #{@filename || 'unknown'} for #{@origin || 'unknown'} zone.
-      ;	Zone version: #{soa[:serial]}
+      ; Database file #{@filename || 'unknown'} for #{@origin || 'unknown'} zone.
+      ; Zone version: #{soa[:serial]}
       ;
-      #{soa[:origin]}		#{soa[:ttl]} IN  SOA  #{soa[:primary]} #{soa[:email]} (
-      				#{soa[:serial]}	; serial number
-      				#{soa[:refresh]}	; refresh
-      				#{soa[:retry]}	; retry
-      				#{soa[:expire]}	; expire
-      				#{soa[:minimumTTL]}	; minimum TTL
-      				)
+      #{soa[:origin]}\t#{soa[:ttl]}\tIN\tSOA\t(
+      \t\t\t\t\t#{soa[:primary]}\t; primary
+      \t\t\t\t\t#{soa[:email]}\t; email
+      \t\t\t\t\t#{soa[:serial]}\t; serial number
+      \t\t\t\t\t#{soa[:refresh]}\t; refresh
+      \t\t\t\t\t#{soa[:retry]}\t; retry
+      \t\t\t\t\t#{soa[:expire]}\t; expire
+      \t\t\t\t\t#{soa[:minimumTTL]}\t; minimum TTL
+      \t\t\t\t)
 
       #{@origin ? "$ORIGIN #{@origin}" : ''}
       #{@ttl ? "$TTL #{@ttl}" : ''}
