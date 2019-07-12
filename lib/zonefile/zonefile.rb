@@ -662,7 +662,7 @@ class Zonefile
   private
 
   def format_rr(name, type, *fields)
-    return if (rrs = @records[name]).empty?
+    return "" if (rrs = @records[name]).empty?
 
     rrs.inject("\n; Zone #{type} Records\n") do |out, rr|
       line = [:name, :ttl, :class, type, *fields].map {|f|
