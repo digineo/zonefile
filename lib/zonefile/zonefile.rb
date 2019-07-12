@@ -51,15 +51,6 @@
 #  # Print new zonefile
 #  puts "New Zonefile: \n#{zf.output}"
 #
-# == Name attribute magic
-#
-# Since 1.04 the :name attribute is preserved and returned as defined in
-# a previous record if a zonefile entry omits it. This should be the expected
-# behavior for most users. You can switch this off globally by calling
-# Zonefile.preserve_name(false)
-#
-# This options is deprecated in version 1.99 and will be removed in 2.0.
-#
 # == Authors
 #
 # Martin Boese, based on Simon Flack Perl library DNS::ZoneParse
@@ -108,20 +99,6 @@ class Zonefile
   attr_reader :data     # original zonefile
   attr_reader :origin   # global $ORIGIN directive
   attr_reader :ttl      # global $TTL directive
-
-  @@preserve_name = true
-
-  # For compatibility: This switches off copying of the :name from the
-  # previous record in a zonefile if found omitted.
-  #
-  # This was zonefile's behavior in < v1.04.
-  #
-  # Deprecation warning: This is marked for removal in v2.0
-  def self.preserve_name(do_preserve_name)
-    return unless (@@preserve_name = do_preserve_name)
-
-    warn "Zonefile::preserve_name is deprecated and marked for removal in v2.0"
-  end
 
   # Compact a zonefile content - removes empty lines, comments,
   # converts tabs into spaces etc...
@@ -198,10 +175,8 @@ class Zonefile
   end
 
   def add_record(type, data = {})
-    if @@preserve_name
-      @lastname = data[:name] if data[:name].to_s != ""
-      data[:name] = @lastname if data[:name].to_s == ""
-    end
+    @lastname = data[:name] if data[:name].to_s != ""
+    data[:name] = @lastname if data[:name].to_s == ""
     @records[type] << data
   end
 

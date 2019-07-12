@@ -4,8 +4,6 @@ require "pathname"
 $LOAD_PATH.push File.expand_path("../lib", __dir__)
 require "zonefile"
 
-# Zonefile.preserve_name(false)
-
 $zf_output_shown = false
 
 class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
@@ -78,20 +76,6 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
     assert_equal "www", a[:name].to_s # name preserved
 
     run_again_with_zf_output!
-  end
-
-  def test_preserve_name
-    Zonefile.preserve_name(false)
-    setup
-    a = @zf.a.find {|rr| rr[:host] == "10.0.0.2" }
-    assert_nil a[:name]             # no name preserved
-    assert_nil @zf.nsec3[0][:name]  # same here
-
-    Zonefile.preserve_name(true)
-    setup
-    a = @zf.a.find {|rr| rr[:host] == "10.0.0.2" }
-    assert_equal "www", a[:name] # now name IS preserved
-    assert_equal "alfa.example.com.", @zf.nsec3[0][:name] # same here
   end
 
   def test_mx
