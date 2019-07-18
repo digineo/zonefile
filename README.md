@@ -34,9 +34,9 @@ The following hash keys are returned per record type:
 | NAPTR      | `:name`, `:ttl`, `:class`, `:order`, `:preference`, `:flags`, `:service`, `:regexp`, `:replacement` |
 | SPF        | `:name`, `:ttl`, `:class`, `:text` |
 
-This list might be incomplete. Inspect `Zonefile::RECORDS` for the actually
-supported record types. Please note that the SOA record type is omitted
-from that list.
+This list might be incomplete. Inspect `Zonefile::RECORDS` for the actual
+list of supported record types. Please note that the SOA record type is
+omitted from that list.
 
 
 # Installation
