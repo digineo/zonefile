@@ -1,3 +1,7 @@
+# 2.0.2
+
+- add `Zonefile#next_serial`
+
 # 2.0.1
 
 - improve `Zonefile#resource_records`

@@ -29,10 +29,27 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
   end
 
   def teardown
-    return if $zf_output_shown || failures.empty?
+    return # if $zf_output_shown || failures.empty?
 
     $zf_output_shown = true
     puts "\n\e[35m" << @zf.output << "\e[0m"
+  end
+
+  def test_next_serial
+    Time.stub :now, Time.new(2019, 7, 18, 12, 34, 56, 0) do
+      {
+        0          => 2019071800,
+        1          => 2019071800,
+        100        => 2019071800,
+        2019071700 => 2019071800,
+        2019071800 => 2019071801,
+        2019071899 => 2019071900,
+        2020202019 => 2020202020,
+      }.each do |input, expected|
+        actual = Zonefile.next_serial(input.to_s)
+        assert_equal expected.to_s, actual
+      end
+    end
   end
 
   def test_empty

@@ -136,6 +136,13 @@ class Zonefile
     Zonefile.new(File.read(file_name), file_name.split("/").last, origin)
   end
 
+  def self.next_serial(curr_serial)
+    curr = curr_serial.to_i
+    base = Time.now.strftime("%Y%m%d00").to_i
+
+    curr >= base ? (curr+1).to_s : base.to_s
+  end
+
   # create a new zonefile object by passing the content of the zonefile
   def initialize(zonefile = "", file_name = nil, origin = nil)
     @data = zonefile
@@ -182,17 +189,7 @@ class Zonefile
 
   # Generates a new serial number in the format of YYYYMMDDII if possible
   def new_serial
-    base = Time.now.strftime("%Y%m%d")
-
-    if (@soa[:serial].to_i / 100) > base.to_i
-      ns = @soa[:serial].to_i + 1
-      @soa[:serial] = ns.to_s
-      return ns.to_s
-    end
-
-    serial = format("%<base>s00", base: base).to_i
-    serial += 1 while serial <= @soa[:serial].to_i
-    @soa[:serial] = serial.to_s
+    @soa[:serial] = self.class.next_serial(@soa[:serial])
   end
 
   def parse
