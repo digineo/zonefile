@@ -18,6 +18,7 @@ The following hash keys are returned per record type:
 | A          | `:name`, `:ttl`, `:class`, `:host` |
 | MX         | `:name`, `:ttl`, `:class`, `:pri`, `:host` |
 | NS         | `:name`, `:ttl`, `:class`, `:host` |
+| CAA        | `:name`, `:ttl`, `:class`, `:flag`, `:tag`, `:value` |
 | CNAME      | `:name`, `:ttl`, `:class`, `:host` |
 | TXT        | `:name`, `:ttl`, `:class`, `:text` |
 | A4 (AAAA)  | `:name`, `:ttl`, `:class`, `:host` |
@@ -32,6 +33,20 @@ The following hash keys are returned per record type:
 | TLSA       | `:name`, `:ttl`, `:class`, `:certificate_usage`, `:selector`, `:matching_type`, `:data` |
 | NAPTR      | `:name`, `:ttl`, `:class`, `:order`, `:preference`, `:flags`, `:service`, `:regexp`, `:replacement` |
 | SPF        | `:name`, `:ttl`, `:class`, `:text` |
+
+This list might be incomplete. Inspect `Zonefile::RECORDS` for the actually
+supported record types. Please note that the SOA record type is omitted
+from that list.
+
+
+# Installation
+
+Add this to your `Gemfile` and run `bundle install`:
+
+```ruby
+gem "zonefile", "~> 2.0", git: "https://github.com/digineo/zonefile.git"
+```
+
 
 # Examples
 
