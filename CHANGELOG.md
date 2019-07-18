@@ -1,6 +1,10 @@
+# 2.0.1
+
+- improve `Zonefile#resource_records`
+
 # 2.0.0
 
-- remove `Zonefile.preserve_name`
+- improve `Zonefile#resource_records`
 
 # 1.99
 
