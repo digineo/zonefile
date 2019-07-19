@@ -38,15 +38,21 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
   def test_next_serial
     Time.stub :now, Time.new(2019, 7, 18, 12, 34, 56, 0) do
       {
-        0          => 2019071800,
-        1          => 2019071800,
-        100        => 2019071800,
-        2019071700 => 2019071800,
-        2019071800 => 2019071801,
-        2019071899 => 2019071900,
-        2020202019 => 2020202020,
+        0            => 2019071800, # non-date serials jump to current date
+        1            => 2019071800,
+        100          => 2019071800,
+        -1           => 2019071800,
+        2019071700   => 2019071800, # date-like serials will be incremented
+        2019071800   => 2019071801,
+        2019071899   => 2019071900,
+        2020202019   => 2020202020,
+        "0"          => 2019071800, # serial can be given as string
+        "2020202019" => 2020202020,
+        nil          => 2019071800, # impl detail: nil.to_i == 0
+        ""           => 2019071800, # impl detail:  "".to_i == 0
       }.each do |input, expected|
-        actual = Zonefile.next_serial(input.to_s)
+        actual = Zonefile.next_serial(input)
+        assert actual.is_a?(String)
         assert_equal expected.to_s, actual
       end
     end
