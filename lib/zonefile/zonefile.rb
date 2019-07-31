@@ -146,6 +146,23 @@ class Zonefile
     (serial % MAX_SERIAL).to_s
   end
 
+  TTL_FACTORS = {
+    "w" => 7 * 24 * 60 * 60,
+    "d" => 24 * 60 * 60,
+    "h" => 60 * 60,
+    "m" => 60,
+  }.freeze
+
+  def self.expand_ttl(value)
+    return value if value.nil? || value.is_a?(Numeric)
+    return nil   if value == ""
+
+    value.to_s.scan(/(\d+)([wdhms])?/i).inject(0) do |sum, (n, u)|
+      factor = u ? TTL_FACTORS.fetch(u.downcase, 1) : 1
+      sum + (n.to_i * factor)
+    end
+  end
+
   # create a new zonefile object by passing the content of the zonefile
   def initialize(zonefile = "", file_name = nil, origin = nil)
     @data = zonefile
@@ -297,7 +314,7 @@ class Zonefile
       ^\$TTL \s+
       (?<ttl> #{RR_TTL})
     }oix.freeze do |m|
-      m[:ttl]
+      Zonefile.expand_ttl(m[:ttl])
     end
 
     SOA = Matcher.new nil, %r{
@@ -312,14 +329,14 @@ class Zonefile
     }oix.freeze do |m|
       {
         origin:     m[:name],
-        ttl:        m[:ttl] || "",
+        ttl:        Zonefile.expand_ttl(m[:ttl]) || "",
         primary:    m[:primary],
         email:      m[:email],
         serial:     m[:serial],
-        refresh:    m[:refresh],
-        retry:      m[:retry],
-        expire:     m[:expire],
-        minimumTTL: m[:minimumTTL],
+        refresh:    Zonefile.expand_ttl(m[:refresh]),
+        retry:      Zonefile.expand_ttl(m[:retry]),
+        expire:     Zonefile.expand_ttl(m[:expire]),
+        minimumTTL: Zonefile.expand_ttl(m[:minimumTTL]),
       }
     end
 
@@ -329,7 +346,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         host:  m[:host],
       }
@@ -341,7 +358,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         host:  m[:host],
       }
@@ -353,7 +370,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         host:  m[:host],
       }
@@ -367,7 +384,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         flag:  m[:flag].to_i,
         tag:   m[:tag],
@@ -381,7 +398,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         host:  m[:host],
       }
@@ -394,7 +411,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         host:  m[:host],
         pri:   m[:pri].to_i,
@@ -410,7 +427,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:   m[:name],
-        ttl:    m[:ttl],
+        ttl:    Zonefile.expand_ttl(m[:ttl]),
         class:  m[:class],
         pri:    m[:pri],
         weight: m[:weight],
@@ -428,7 +445,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:        m[:name],
-        ttl:         m[:ttl],
+        ttl:         Zonefile.expand_ttl(m[:ttl]),
         class:       m[:class],
         key_tag:     m[:key_tag].to_i,
         algorithm:   m[:algorithm],
@@ -444,7 +461,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         next:  m[:next],
         types: m[:types].strip,
@@ -462,7 +479,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:       m[:name],
-        ttl:        m[:ttl],
+        ttl:        Zonefile.expand_ttl(m[:ttl]),
         class:      m[:class],
         algorithm:  m[:algorithm],
         flags:      m[:flags],
@@ -482,7 +499,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:       m[:name],
-        ttl:        m[:ttl],
+        ttl:        Zonefile.expand_ttl(m[:ttl]),
         class:      m[:class],
         algorithm:  m[:algorithm],
         flags:      m[:flags],
@@ -500,7 +517,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:       m[:name],
-        ttl:        m[:ttl],
+        ttl:        Zonefile.expand_ttl(m[:ttl]),
         class:      m[:class],
         flag:       m[:flag].to_i,
         protocol:   m[:protocol].to_i,
@@ -523,7 +540,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:         m[:name],
-        ttl:          m[:ttl],
+        ttl:          Zonefile.expand_ttl(m[:ttl]),
         class:        m[:class],
         type_covered: m[:type_covered],
         algorithm:    m[:algorithm],
@@ -546,7 +563,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:              m[:name],
-        ttl:               m[:ttl],
+        ttl:               Zonefile.expand_ttl(m[:ttl]),
         class:             m[:class],
         certificate_usage: m[:usage].to_i,
         selector:          m[:selector].to_i,
@@ -566,7 +583,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:        m[:name],
-        ttl:         m[:ttl],
+        ttl:         Zonefile.expand_ttl(m[:ttl]),
         class:       m[:class],
         order:       m[:order].to_i,
         preference:  m[:preference].to_i,
@@ -582,7 +599,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         host:  m[:host],
       }
@@ -593,7 +610,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         text:  m[:text].strip,
       }
@@ -604,7 +621,7 @@ class Zonefile
     }oix.freeze do |m|
       {
         name:  m[:name],
-        ttl:   m[:ttl],
+        ttl:   Zonefile.expand_ttl(m[:ttl]),
         class: m[:class],
         text:  m[:text].strip,
       }
@@ -666,7 +683,11 @@ class Zonefile
 
     rrs.inject("\n; Zone #{type} Records\n") do |out, rr|
       line = [:name, :ttl, :class, type, *fields].map {|f|
-        f.is_a?(Symbol) ? rr[f] : f
+        case f
+        when :ttl   then self.class.expand_ttl(rr[f])
+        when Symbol then rr[f]
+        else             f
+        end
       }
       out << line.join("\t") << "\n"
     end

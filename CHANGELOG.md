@@ -1,3 +1,8 @@
+# 2.1.0
+
+- TTL values are now always expanded to seconds (i.e. 1H => 3600),
+  and the `:ttl` keys now contain the integer value
+
 # 2.0.3
 
 - follow recommendations of RFC1982 and perform proper

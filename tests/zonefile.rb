@@ -57,8 +57,29 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
       }.each do |input, expected|
         actual = Zonefile.next_serial(input)
         assert actual.is_a?(String)
-        assert_equal expected.to_s, actual
+        assert_equal expected.to_s, actual, "expected next_serial(#{input}) to equal #{expected}, got #{actual}"
       end
+    end
+  end
+
+  def test_expand_ttl
+    [nil, ""].each do |input|
+      assert_nil Zonefile.expand_ttl(input)
+    end
+
+    {
+      0       => 0,
+      60      => 60,
+      84600   => 84600,
+      "1w"    => 7 * 24 * 3600,
+      "1d"    => 24 * 3600,
+      "1H"    => 3600,
+      "1s"    => 1,
+      "2h42m" => 2 * 3600 + 42 * 60,
+      "99d"   => 99 * 24 * 3600, # despite RFC1035, section 7.3
+    }.each do |input, expected|
+      actual = Zonefile.expand_ttl(input)
+      assert_equal expected, actual, "expected expand_ttl(#{input}) to equal #{expected}, got #{actual}"
     end
   end
 
@@ -81,10 +102,10 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
   end
 
   def test_soa
-    assert_equal "86400", @zf.soa[:minimumTTL]
-    assert_equal "691200", @zf.soa[:expire]
-    assert_equal "3600", @zf.soa[:retry]
-    assert_equal "10800", @zf.soa[:refresh]
+    assert_equal 86400, @zf.soa[:minimumTTL]
+    assert_equal 691200, @zf.soa[:expire]
+    assert_equal 3600, @zf.soa[:retry]
+    assert_equal 10800, @zf.soa[:refresh]
     assert_equal "2000100501", @zf.soa[:serial]
     assert_equal "support.dns-zoneparse-test.net.", @zf.soa[:email]
     assert_equal "ns0.dns-zoneparse-test.net.", @zf.soa[:primary]
@@ -99,7 +120,7 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
     assert_equal "127.0.0.1", @zf.a.first[:host]
 
     a = @zf.a.find {|rr| rr[:host] == "10.0.0.3" }
-    assert_equal "43200", a[:ttl]
+    assert_equal 43200, a[:ttl]
     assert_equal "www", a[:name].to_s # name preserved
 
     run_again_with_zf_output!
@@ -168,7 +189,7 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
 
   def test_srv
     assert_equal "_sip._tcp.example.com.", @zf.srv[0][:name]
-    assert_equal "86400", @zf.srv[0][:ttl]
+    assert_equal 86400, @zf.srv[0][:ttl]
     assert_equal "0", @zf.srv[0][:pri]
     assert_equal "5", @zf.srv[0][:weight]
     assert_equal "5060", @zf.srv[0][:port]
@@ -301,7 +322,7 @@ SIGNATURE
 
   def test_tlsa
     assert_equal "_443._tcp.www.example.com.", @zf.tlsa[0][:name]
-    assert_equal "86400", @zf.srv[0][:ttl]
+    assert_equal 86400, @zf.srv[0][:ttl]
     assert_equal 1, @zf.tlsa[0][:certificate_usage]
     assert_equal 1, @zf.tlsa[0][:selector]
     assert_equal 2, @zf.tlsa[0][:matching_type]
