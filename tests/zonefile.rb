@@ -50,6 +50,10 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
         "2020202019" => 2020202020,
         nil          => 2019071800, # impl detail: nil.to_i == 0
         ""           => 2019071800, # impl detail:  "".to_i == 0
+        2**32 - 2    => 2**32 - 1,  # serial arithmetic
+        2**32 - 1    => 0,
+        2**32        => 1,
+        2**32 + 1    => 2,
       }.each do |input, expected|
         actual = Zonefile.next_serial(input)
         assert actual.is_a?(String)
@@ -174,15 +178,17 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
   end
 
   def test_serial_generator
-    old = @zf.soa[:serial]
-    new = @zf.new_serial
-    assert new.to_i > old.to_i
-    newer = @zf.new_serial
-    assert newer.to_i - 1, new
+    old_serial = @zf.soa[:serial]
+    new_serial = @zf.new_serial
+    assert new_serial.to_i > old_serial.to_i
+    newer_serial = @zf.new_serial
+    assert_equal newer_serial.to_i-1, new_serial.to_i
+  end
 
-    @zf.soa[:serial] = "9999889901"
+  def test_serial_arithmetic
+    @zf.soa[:serial] = (2**32).to_s
     @zf.new_serial
-    assert_equal "9999889902", @zf.soa[:serial]
+    assert_equal "1", @zf.soa[:serial]
   end
 
   def test_ptr

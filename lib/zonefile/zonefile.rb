@@ -136,11 +136,14 @@ class Zonefile
     Zonefile.new(File.read(file_name), file_name.split("/").last, origin)
   end
 
+  MAX_SERIAL = 2**32 # uint32
+
   def self.next_serial(curr_serial)
     curr = curr_serial.to_i
     base = Time.now.strftime("%Y%m%d00").to_i
 
-    curr >= base ? (curr+1).to_s : base.to_s
+    serial = curr >= base ? curr + 1 : base
+    (serial % MAX_SERIAL).to_s
   end
 
   # create a new zonefile object by passing the content of the zonefile
@@ -299,13 +302,13 @@ class Zonefile
 
     SOA = Matcher.new nil, %r{
       #{PREFIX_REQ_NAME} SOA \s+
-      (?<primary>   #{VALID_NAME}) \s+
-      (?<email>     #{VALID_NAME}) \s*
-      (?<serial>    #{RR_TTL}) \s+
-      (?<refresh>   #{RR_TTL}) \s+
-      (?<retry>     #{RR_TTL}) \s+
-      (?<expire>    #{RR_TTL}) \s+
-      (?<minimumTTL>#{RR_TTL}) \s*
+      (?<primary>     #{VALID_NAME}) \s+
+      (?<email>       #{VALID_NAME}) \s*
+      (?<serial>      \d+) \s+
+      (?<refresh>     #{RR_TTL}) \s+
+      (?<retry>       #{RR_TTL}) \s+
+      (?<expire>      #{RR_TTL}) \s+
+      (?<minimumTTL>  #{RR_TTL}) \s*
     }oix.freeze do |m|
       {
         origin:     m[:name],
