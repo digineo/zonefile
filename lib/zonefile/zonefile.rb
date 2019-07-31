@@ -232,18 +232,18 @@ class Zonefile
     # compound common prefix for many RRs (name is required)
     PREFIX_REQ_NAME = %r{
       ^
-      (?<name>#{VALID_NAME}) \s+
-      (?:(?<ttl>#{RR_TTL})\s+)?
-      (?:(?<class>#{RR_CLASS})\s+)?
+      (?<name>      #{VALID_NAME}) \s+
+      (?:(?<ttl>    #{RR_TTL})\s+)?
+      (?:(?<class>  #{RR_CLASS})\s+)?
       \b
     }oix.freeze
 
     # compound common prefix for many RRs (name is optional)
     PREFIX_OPT_NAME = %r{
       ^
-      (?<name>#{VALID_NAME})? \s*
-      (?:(?<ttl>#{RR_TTL})\s+)?
-      (?:(?<class>#{RR_CLASS})\s+)?
+      (?<name>      #{VALID_NAME})? \s*
+      (?:(?<ttl>    #{RR_TTL})\s+)?
+      (?:(?<class>  #{RR_CLASS})\s+)?
       \b
     }oix.freeze
 
@@ -287,7 +287,7 @@ class Zonefile
     # origin directive
     DIRECTIVE_ORIGIN = Matcher.new nil, %r{
       ^\$ORIGIN \s+
-      (?<origin>#{VALID_NAME})
+      (?<origin>  #{VALID_NAME})
     }oix.freeze do |m|
       m[:origin]
     end
@@ -295,7 +295,7 @@ class Zonefile
     # ttl directive
     DIRECTIVE_TTL = Matcher.new nil, %r{
       ^\$TTL \s+
-      (?<ttl>#{RR_TTL})
+      (?<ttl> #{RR_TTL})
     }oix.freeze do |m|
       m[:ttl]
     end
@@ -325,7 +325,7 @@ class Zonefile
 
     NS = Matcher.new :ns, %r{
       #{PREFIX_OPT_NAME} NS \s
-      (?<host>#{VALID_NAME})
+      (?<host>  #{VALID_NAME})
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -337,7 +337,7 @@ class Zonefile
 
     A = Matcher.new :a, %r{
       #{PREFIX_OPT_NAME} A \s
-      (?<host>#{VALID_NAME})
+      (?<host>  #{VALID_NAME})
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -349,7 +349,7 @@ class Zonefile
 
     AAAA = Matcher.new :a4, %r{
       #{PREFIX_OPT_NAME} AAAA \s
-      (?<host>#{VALID_IP6})$
+      (?<host>  #{VALID_IP6})$
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -361,9 +361,9 @@ class Zonefile
 
     CAA = Matcher.new :caa, %r{
       #{PREFIX_OPT_NAME} CAA \s+
-      (?<flag>\d+) \s+
-      (?<tag>issue|issuewild|iodef) \s+
-      (?<value>.*)$
+      (?<flag>  \d+) \s+
+      (?<tag>   issue|issuewild|iodef) \s+
+      (?<value> .*)$
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -377,7 +377,7 @@ class Zonefile
 
     CNAME = Matcher.new :cname, %r{
       #{PREFIX_OPT_NAME} CNAME \s
-      (?<host>#{VALID_NAME})
+      (?<host>  #{VALID_NAME})
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -389,8 +389,8 @@ class Zonefile
 
     MX = Matcher.new :mx, %r{
       #{PREFIX_OPT_NAME} MX \s
-      (?<pri>\d+) \s
-      (?<host>#{VALID_NAME})$
+      (?<pri> \d+) \s
+      (?<host>  #{VALID_NAME})$
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -403,10 +403,10 @@ class Zonefile
 
     SRV = Matcher.new :srv, %r{
       #{PREFIX_OPT_NAME} SRV \s
-      (?<pri>\d+) \s
-      (?<weight>\d+) \s
-      (?<port>\d+) \s
-      (?<host>#{VALID_NAME})
+      (?<pri>     \d+) \s
+      (?<weight>  \d+) \s
+      (?<port>    \d+) \s
+      (?<host>    #{VALID_NAME})
     }oix.freeze do |m|
       {
         name:   m[:name],
@@ -421,10 +421,10 @@ class Zonefile
 
     DS = Matcher.new :ds, %r{
       #{PREFIX_OPT_NAME} DS \s
-      (?<key_tag>\d+) \s
-      (?<algorithm>\w+) \s
-      (?<digest_type>\d+) \s
-      (?<digest>#{HEX})
+      (?<key_tag>     \d+) \s
+      (?<algorithm>   \w+) \s
+      (?<digest_type> \d+) \s
+      (?<digest>      #{HEX})
     }oix.freeze do |m|
       {
         name:        m[:name],
@@ -439,8 +439,8 @@ class Zonefile
 
     NSEC = Matcher.new :nsec, %r{
       #{PREFIX_OPT_NAME} NSEC \s
-      (?<next>#{VALID_NAME}) \s
-      (?<types>[\s\w]*)
+      (?<next>  #{VALID_NAME}) \s
+      (?<types> [\s\w]*)
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -453,12 +453,12 @@ class Zonefile
 
     NSEC3 = Matcher.new :nsec3, %r{
       #{PREFIX_OPT_NAME} NSEC3 \s
-      (?<algorithm>\d+) \s
-      (?<flags>\d+) \s
-      (?<iterations>\d+) \s
-      (?<salt>-|[A-F0-9]*) \s
-      (?<next>[A-Z2-7=]*) \s
-      (?<types>[\s\w]*)
+      (?<algorithm>  \d+) \s
+      (?<flags>      \d+) \s
+      (?<iterations> \d+) \s
+      (?<salt>       -|[A-F0-9]*) \s
+      (?<next>       [A-Z2-7=]*) \s
+      (?<types>      [\s\w]*)
     }oix.freeze do |m|
       {
         name:       m[:name],
@@ -475,10 +475,10 @@ class Zonefile
 
     NSEC3PARAM = Matcher.new :nsec3param, %r{
       #{PREFIX_OPT_NAME} NSEC3PARAM \s
-      (?<algorithm>\d+) \s
-      (?<flags>\d+) \s
-      (?<iterations>\d+) \s
-      (?<salt>-|[A-F0-9]*)
+      (?<algorithm>   \d+) \s
+      (?<flags>       \d+) \s
+      (?<iterations>  \d+) \s
+      (?<salt>        -|[A-F0-9]*)
     }oix.freeze do |m|
       {
         name:       m[:name],
@@ -493,10 +493,10 @@ class Zonefile
 
     DNSKEY = Matcher.new :dnskey, %r{
       #{PREFIX_OPT_NAME} DNSKEY \s
-      (?<flag>\d+) \s
-      (?<protocol>\d+) \s
-      (?<algorithm>\w+) \s
-      (?<pubkey>#{BASE64})
+      (?<flag>      \d+) \s
+      (?<protocol>  \d+) \s
+      (?<algorithm> \w+) \s
+      (?<pubkey>    #{BASE64})
     }oix.freeze do |m|
       {
         name:       m[:name],
@@ -511,15 +511,15 @@ class Zonefile
 
     RRSIG = Matcher.new :rrsig, %r{
       #{PREFIX_OPT_NAME} RRSIG \s
-      (?<type_covered>\w+) \s
-      (?<algorithm>\w+) \s
-      (?<labels>\d+) \s
-      (?<original_ttl>\d+) \s
-      (?<expiration>\d+) \s
-      (?<inception>\d+) \s
-      (?<key_tag>\d+) \s
-      (?<signer>#{VALID_NAME}) \s
-      (?<signature>#{BASE64})
+      (?<type_covered>  \w+) \s
+      (?<algorithm>     \w+) \s
+      (?<labels>        \d+) \s
+      (?<original_ttl>  \d+) \s
+      (?<expiration>    \d+) \s
+      (?<inception>     \d+) \s
+      (?<key_tag>       \d+) \s
+      (?<signer>        #{VALID_NAME}) \s
+      (?<signature>     #{BASE64})
     }oix.freeze do |m|
       {
         name:         m[:name],
@@ -539,10 +539,10 @@ class Zonefile
 
     TLSA = Matcher.new :tlsa, %r{
       #{PREFIX_REQ_NAME} TLSA \s
-      (?<usage>\d+) \s
-      (?<selector>\d+) \s
-      (?<type>\d+) \s
-      (?<data>#{BASE64})
+      (?<usage>     \d+) \s
+      (?<selector>  \d+) \s
+      (?<type>      \d+) \s
+      (?<data>      #{BASE64})
     }oix.freeze do |m|
       {
         name:              m[:name],
@@ -557,12 +557,12 @@ class Zonefile
 
     NAPTR = Matcher.new :naptr, %r{
       #{PREFIX_OPT_NAME} NAPTR \s
-      (?<order>\d+) \s
-      (?<preference>\d+) \s
-      (?<flags>#{QUOTED}) \s
-      (?<service>#{QUOTED}) \s
-      (?<regexp>#{QUOTED}) \s
-      (?<replacement>#{VALID_NAME})
+      (?<order>       \d+) \s
+      (?<preference>  \d+) \s
+      (?<flags>       #{QUOTED}) \s
+      (?<service>     #{QUOTED}) \s
+      (?<regexp>      #{QUOTED}) \s
+      (?<replacement> #{VALID_NAME})
     }oix.freeze do |m|
       {
         name:        m[:name],
@@ -578,7 +578,7 @@ class Zonefile
     end
 
     PTR = Matcher.new :ptr, %r{
-      #{PREFIX_OPT_NAME} PTR \s+ (?<host>#{VALID_NAME})$
+      #{PREFIX_OPT_NAME} PTR \s+ (?<host> #{VALID_NAME})$
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -589,7 +589,7 @@ class Zonefile
     end
 
     TXT = Matcher.new :txt, %r{
-      #{PREFIX_OPT_NAME} TXT \s+ (?<text>.*)$
+      #{PREFIX_OPT_NAME} TXT \s+ (?<text> .*)$
     }oix.freeze do |m|
       {
         name:  m[:name],
@@ -600,7 +600,7 @@ class Zonefile
     end
 
     SPF = Matcher.new :spf, %r{
-      #{PREFIX_OPT_NAME} SPF \s+ (?<text>.*)$
+      #{PREFIX_OPT_NAME} SPF \s+ (?<text> .*)$
     }oix.freeze do |m|
       {
         name:  m[:name],

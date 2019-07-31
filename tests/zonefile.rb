@@ -29,7 +29,7 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
   end
 
   def teardown
-    return # if $zf_output_shown || failures.empty?
+    return if $zf_output_shown || failures.empty?
 
     $zf_output_shown = true
     puts "\n\e[35m" << @zf.output << "\e[0m"
@@ -182,7 +182,7 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
     new_serial = @zf.new_serial
     assert new_serial.to_i > old_serial.to_i
     newer_serial = @zf.new_serial
-    assert_equal newer_serial.to_i-1, new_serial.to_i
+    assert_equal newer_serial.to_i - 1, new_serial.to_i
   end
 
   def test_serial_arithmetic
