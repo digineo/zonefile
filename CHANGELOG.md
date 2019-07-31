@@ -1,3 +1,8 @@
+# 2.0.3
+
+- follow recommendations of RFC1982 and perform proper
+  integer overflow for SOA serial
+
 # 2.0.2
 
 - add `Zonefile#next_serial`
