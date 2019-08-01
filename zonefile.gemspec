@@ -4,7 +4,7 @@ require "rubygems"
 
 SPEC = Gem::Specification.new do |s|
   s.name         = "zonefile"
-  s.version      = "2.1.0"
+  s.version      = "2.1.1"
   s.author       = ["Martin Boese", "Dominik Menke"]
   s.email        = ["martin@internet.ao", "dom+gems@digineo.de"]
   s.homepage     = "https://github.com/digineo/zonefile"

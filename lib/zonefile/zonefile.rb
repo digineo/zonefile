@@ -163,6 +163,10 @@ class Zonefile
     end
   end
 
+  def expand_ttl(value)
+    self.class.expand_ttl(value)
+  end
+
   # create a new zonefile object by passing the content of the zonefile
   def initialize(zonefile = "", file_name = nil, origin = nil)
     @data = zonefile
@@ -661,14 +665,22 @@ class Zonefile
 
   # returns a list of RR instances for further processing
   def resource_records
-    rr_soa = RR.new(soa[:origin], soa[:ttl], "IN", "SOA")
-    rr_soa.data = %i[primary email serial refresh retry expire minimumTTL].map {|f|
-      soa[f]
+    rr_soa = RR.new(soa[:origin], expand_ttl(soa[:ttl]), "IN", "SOA")
+    rr_soa.data = {
+      primary:    false,
+      email:      false,
+      serial:     false,
+      refresh:    true,
+      retry:      true,
+      expire:     true,
+      minimumTTL: true,
+    }.map {|f, expand|
+      expand ? expand_ttl(soa[f]) : soa[f]
     }.join("\t")
 
     RECORDS.each_with_object(soa: rr_soa) do |(name, (type, *fields)), rrs|
       @records[name].each do |item|
-        rr = RR.new(item[:name], item[:ttl], item[:class], type)
+        rr = RR.new(item[:name], expand_ttl(item[:ttl]), item[:class], type)
         rr.data = fields.map {|f| item[f] }.join("\t")
         rrs[type] ||= []
         rrs[type] << rr
@@ -684,7 +696,7 @@ class Zonefile
     rrs.inject("\n; Zone #{type} Records\n") do |out, rr|
       line = [:name, :ttl, :class, type, *fields].map {|f|
         case f
-        when :ttl   then self.class.expand_ttl(rr[f])
+        when :ttl   then expand_ttl(rr[f])
         when Symbol then rr[f]
         else             f
         end

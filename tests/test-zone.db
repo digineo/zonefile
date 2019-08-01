@@ -3,11 +3,11 @@
 $TTL 1H
 $ORIGIN	 test-zone.db
 @                       3600	IN	SOA	ns0.dns-zoneparse-test.net.	support.dns-zoneparse-test.net.	(
-                        2000100501   ; serial number
-                        10800       ; refresh
-                        3600        ; retry
-                        691200      ; expire
-                        86400     ) ; minimum TTL
+                        2000100501  ; serial number
+                        3H          ; refresh
+                        1H          ; retry
+                        8d          ; expire
+                        1D     )    ; minimum TTL
 
          43200          IN	NS	ns0.dns-zoneparse-test.net.	; ( A multi line
          comment )
@@ -67,3 +67,5 @@ urn.example.com.        IN NAPTR 100  50  "s"    "http+N2L+N2C+N2R"  ""   www.ex
 example.com.      IN CAA 0 issue "ca.example.com"
 example.com.      IN CAA 0 iodef "mailto:security@example.com"
 host.example.com. IN CAA 0 issue ";"
+
+expand 6H IN CNAME @

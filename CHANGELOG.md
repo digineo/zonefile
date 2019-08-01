@@ -1,3 +1,7 @@
+# 2.1.1
+
+- TTL values are now also expanded when dumping records.
+
 # 2.1.0
 
 - TTL values are now always expanded to seconds (i.e. 1H => 3600),

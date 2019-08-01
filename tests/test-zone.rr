@@ -12,6 +12,7 @@ foo		IN	A	10.0.0.6
 mini			A	10.0.0.7
 icarus		IN	AAAA	fe80::0260:83ff:fe7c:3a2a
 ftp		IN	CNAME	www
+expand	21600	IN	CNAME	@
 example.com.		IN	CAA	0	issue	"ca.example.com"
 example.com.		IN	CAA	0	iodef	"mailto:security@example.com"
 host.example.com.		IN	CAA	0	issue	";"
