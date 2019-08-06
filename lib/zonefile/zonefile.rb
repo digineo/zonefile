@@ -680,7 +680,7 @@ class Zonefile
 
     RECORDS.each_with_object(soa: rr_soa) do |(name, (type, *fields)), rrs|
       @records[name].each do |item|
-        rr = RR.new(item[:name], expand_ttl(item[:ttl]), item[:class], type)
+        rr = RR.new(item[:name], expand_ttl(item[:ttl]), (item[:class] || "IN" ).upcase, type)
         rr.data = fields.map {|f| item[f] }.join("\t")
         rrs[type] ||= []
         rrs[type] << rr

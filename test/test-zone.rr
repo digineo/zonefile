@@ -5,11 +5,11 @@
 localhost		IN	A	127.0.0.1
 mail		IN	A	127.0.0.1
 www		IN	A	127.0.0.1
-www		in	A	10.0.0.2
+www		IN	A	10.0.0.2
 www	43200	IN	A	10.0.0.3
-www			A	10.0.0.5
+www		IN	A	10.0.0.5
 foo		IN	A	10.0.0.6
-mini			A	10.0.0.7
+mini		IN	A	10.0.0.7
 icarus		IN	AAAA	fe80::0260:83ff:fe7c:3a2a
 ftp		IN	CNAME	www
 expand	21600	IN	CNAME	@
@@ -29,12 +29,12 @@ alfa.example.com.		IN	NSEC3PARAM	1	0	12	aabbccdd
 12.23.21.23.in-addr.arpa		IN	PTR	www.myhost.example.com.
 host.example.com.	86400	IN	RRSIG	A	5	3	86400	20030322173103	20030220173103	2642	example.com.	oJB1W6WNGv+ldvQ3WDG0MQkg5IEhjRip8WTrPYGv07h108dUKGMeDPKijVCHX3DDKdfb+v6oB9wfuh3DTJXUAfI/M0zmO/zz8bW0Rznl8O3tGNazPwQKkRN20XPXV6nwwfoXmJQbsLNrLfkGJ5D6fwFm8nN+6pBzeDQfsS3Ap3o=
 @		IN	SPF	"v=spf1 mx ~all"
-www			SPF	"v=spf1 -all"
+www		IN	SPF	"v=spf1 -all"
 elsewhere		IN	SPF	"v=spf1 mx ?all"
 _sip._tcp.example.com.	86400	IN	SRV	0	5	5060	sipserver.example.com.
 _443._tcp.www.example.com.	86400	IN	TLSA	1	1	2	92003ba34942dc74152e2f2c408d29ec a5a520e7f2e06bb944f4dca346baf63c 1b177615d466f6c4b71c216a50292bd5 8c9ebdd2f74e38fe51ffd48c43326cbc 
 
-www			TXT	"web;server"
+www		IN	TXT	"web;server"
 soup		IN	TXT	"This is a text message"
-txta			TXT	"t=y; o=-"
+txta		IN	TXT	"t=y; o=-"
 _kerberos		IN	TXT	maxnet.ao
