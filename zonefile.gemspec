@@ -23,4 +23,8 @@ SPEC = Gem::Specification.new do |s|
   candidates     = Dir.glob("{lib,tests}/**/*") << "CHANGELOG"
   s.files        = candidates.delete_if {|item| %w[~ doc].include?(item) }
   s.require_path = "lib"
+
+  s.add_development_dependency "minitest"
+  s.add_development_dependency "rake"
+  s.add_development_dependency "rubocop", "~> 0.72.0"
 end

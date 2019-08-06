@@ -6,7 +6,7 @@ require "zonefile"
 
 $zf_output_shown = false
 
-class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
+class TestZonefile < Minitest::Test #:nodoc:
   # make_my_diffs_pretty!
 
   def setup
@@ -29,7 +29,7 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
   end
 
   def teardown
-    return if $zf_output_shown || failures.empty?
+    return # if $zf_output_shown || failures.empty?
 
     $zf_output_shown = true
     puts "\n\e[35m" << @zf.output << "\e[0m"
@@ -279,15 +279,15 @@ class ZonefileTestCase < Minitest::Unit::TestCase #:nodoc:
     assert_equal 256, @zf.dnskey[0][:flag]
     assert_equal 3, @zf.dnskey[0][:protocol]
     assert_equal "5", @zf.dnskey[0][:algorithm]
-    pkey = <<PUBLIC_KEY.gsub(/\s+/, "").strip
-           AQPSKmynfzW4kyBv015MUG2DeIQ3
-           Cbl+BBZH4b/0PY1kxkmvHjcZc8no
-           kfzj31GajIQKY+5CptLr3buXA10h
-           WqTkF7H6RfoRqXQeogmMHfpftf6z
-           Mv1LyBUgia7za6ZEzOJBOztyvhjL
-           742iU/TpPSEDhm2SNKLijfUppn1U
-           aNvv4w==
-PUBLIC_KEY
+    pkey = <<~PUBLIC_KEY.gsub(/\s+/, "").strip
+      AQPSKmynfzW4kyBv015MUG2DeIQ3
+      Cbl+BBZH4b/0PY1kxkmvHjcZc8no
+      kfzj31GajIQKY+5CptLr3buXA10h
+      WqTkF7H6RfoRqXQeogmMHfpftf6z
+      Mv1LyBUgia7za6ZEzOJBOztyvhjL
+      742iU/TpPSEDhm2SNKLijfUppn1U
+      aNvv4w==
+    PUBLIC_KEY
     assert_equal pkey, @zf.dnskey[0][:public_key]
     assert_equal "example.net.", @zf.dnskey[1][:name]
     assert_equal 256, @zf.dnskey[1][:flag]
@@ -308,13 +308,13 @@ PUBLIC_KEY
     assert_equal 2003_02_20_17_31_03, @zf.rrsig[0][:inception]
     assert_equal 2642, @zf.rrsig[0][:key_tag]
     assert_equal "example.com.", @zf.rrsig[0][:signer]
-    sig = <<SIGNATURE.gsub(/\s+/, "").strip
-        oJB1W6WNGv+ldvQ3WDG0MQkg5IEhjRip8WTr
-        PYGv07h108dUKGMeDPKijVCHX3DDKdfb+v6o
-        B9wfuh3DTJXUAfI/M0zmO/zz8bW0Rznl8O3t
-        GNazPwQKkRN20XPXV6nwwfoXmJQbsLNrLfkG
-        J5D6fwFm8nN+6pBzeDQfsS3Ap3o=
-SIGNATURE
+    sig = <<~SIGNATURE.gsub(/\s+/, "").strip
+      oJB1W6WNGv+ldvQ3WDG0MQkg5IEhjRip8WTr
+      PYGv07h108dUKGMeDPKijVCHX3DDKdfb+v6o
+      B9wfuh3DTJXUAfI/M0zmO/zz8bW0Rznl8O3t
+      GNazPwQKkRN20XPXV6nwwfoXmJQbsLNrLfkG
+      J5D6fwFm8nN+6pBzeDQfsS3Ap3o=
+    SIGNATURE
     assert_equal sig, @zf.rrsig[0][:signature]
 
     run_again_with_zf_output!
@@ -327,12 +327,12 @@ SIGNATURE
     assert_equal 1, @zf.tlsa[0][:selector]
     assert_equal 2, @zf.tlsa[0][:matching_type]
 
-    sig = <<SIGNATURE.gsub(/\s+/, "").strip
-        92003ba34942dc74152e2f2c408d29ec
-        a5a520e7f2e06bb944f4dca346baf63c
-        1b177615d466f6c4b71c216a50292bd5
-        8c9ebdd2f74e38fe51ffd48c43326cbc
-SIGNATURE
+    sig = <<~SIGNATURE.gsub(/\s+/, "").strip
+      92003ba34942dc74152e2f2c408d29ec
+      a5a520e7f2e06bb944f4dca346baf63c
+      1b177615d466f6c4b71c216a50292bd5
+      8c9ebdd2f74e38fe51ffd48c43326cbc
+    SIGNATURE
     assert_equal sig, @zf.tlsa[0][:data].gsub(/\s+/, "")
 
     run_again_with_zf_output!

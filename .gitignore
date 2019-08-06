@@ -1,8 +1,6 @@
-## MAC OS X
 .DS_Store
-
-## Compiled Gems
 *.gem
-
-## Backup Files
 *~
+Gemfile.lock
+.ruby-version
+.ruby-gemset
