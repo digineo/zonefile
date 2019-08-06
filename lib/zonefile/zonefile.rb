@@ -663,9 +663,18 @@ class Zonefile
 
   RR = Struct.new(:name, :ttl, :class, :type, :data)
 
-  # returns a list of RR instances for further processing
-  def resource_records
-    rr_soa = RR.new(soa[:origin], expand_ttl(soa[:ttl]), "IN", "SOA")
+  # Returns a list of RR instances for further processing.
+  #
+  # If `powerdns_sql` is truthy, RR names and data is transformed into a
+  # format suitable for PowerDNS SQL backends (i.e. host names without trailing
+  # dot are suffixed with `$ORIGIN`, `@` is expanded to `$ORIGIN`, and hostnames
+  # with trailing dot loose the trailing dot.
+  #
+  # The `powerdns_sql` knob implements/emulates an "official wart", as per
+  # https://github.com/PowerDNS/pdns/blob/rel/auth-4.2.x/pdns/zone2sql.cc#L59-L63
+  def resource_records(powerdns_sql: false)
+    soa_origin = powerdns_sql ? expand_dot(soa[:origin]) : soa[:origin]
+    rr_soa = RR.new(soa_origin, expand_ttl(soa[:ttl]), "IN", "SOA")
     rr_soa.data = {
       primary:    false,
       email:      false,
@@ -680,6 +689,8 @@ class Zonefile
 
     RECORDS.each_with_object(soa: rr_soa) do |(name, (type, *fields)), rrs|
       @records[name].each do |item|
+        item = expand_dot_content(type, item) if powerdns_sql
+
         rr = RR.new(item[:name], expand_ttl(item[:ttl]), (item[:class] || "IN" ).upcase, type)
         rr.data = fields.map {|f| item[f] }.join("\t")
         rrs[type] ||= []
@@ -689,6 +700,37 @@ class Zonefile
   end
 
   private
+
+  # Fields in RECORDS, which are subject to name expansion with
+  # `resource_records(powerdns_sql: true)`.
+  DOT_CONTENT = {
+    "NS"    => [:host],
+    "CNAME" => [:host],
+    "MX"    => [:host],
+    "NAPTR" => [:replacement],
+    "PTR"   => [:host],
+    "SRV"   => [:host],
+  }.freeze
+  private_constant :DOT_CONTENT
+
+  def expand_dot_content(type, item)
+    item[:name] = expand_dot item[:name]
+    DOT_CONTENT.fetch(type, []).each do |f|
+      item[f] = expand_dot item[f]
+    end
+    item
+  end
+
+  def expand_dot(str)
+    return @origin        if str == "@" || str.nil?
+    return str.chomp(".") if str.end_with?(".")
+
+    if str.end_with?(@origin)
+      str
+    else
+      "#{str}.#{@origin}"
+    end
+  end
 
   def format_rr(name, type, *fields)
     return "" if (rrs = @records[name]).empty?

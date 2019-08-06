@@ -1,0 +1,40 @@
+test-zone.db	3600	IN	SOA	ns0.dns-zoneparse-test.net.	support.dns-zoneparse-test.net.	2000100501	10800	3600	691200	86400
+test-zone.db	43200	IN	NS	ns0.dns-zoneparse-test.net
+test-zone.db		IN	NS	ns1.dns-zoneparse-test.net
+test-zone.db		IN	A	127.0.0.1
+localhost.test-zone.db		IN	A	127.0.0.1
+mail.test-zone.db		IN	A	127.0.0.1
+www.test-zone.db		IN	A	127.0.0.1
+www.test-zone.db		IN	A	10.0.0.2
+www.test-zone.db	43200	IN	A	10.0.0.3
+www.test-zone.db		IN	A	10.0.0.5
+foo.test-zone.db		IN	A	10.0.0.6
+mini.test-zone.db		IN	A	10.0.0.7
+icarus.test-zone.db		IN	AAAA	fe80::0260:83ff:fe7c:3a2a
+ftp.test-zone.db		IN	CNAME	www.test-zone.db
+expand.test-zone.db	21600	IN	CNAME	test-zone.db
+example.com		IN	CAA	0	issue	"ca.example.com"
+example.com		IN	CAA	0	iodef	"mailto:security@example.com"
+host.example.com		IN	CAA	0	issue	";"
+example.com	86400	IN	DNSKEY	256	3	5	AQPSKmynfzW4kyBv015MUG2DeIQ3Cbl+BBZH4b/0PY1kxkmvHjcZc8nokfzj31GajIQKY+5CptLr3buXA10hWqTkF7H6RfoRqXQeogmMHfpftf6zMv1LyBUgia7za6ZEzOJBOztyvhjL742iU/TpPSEDhm2SNKLijfUppn1UaNvv4w==
+example.net	86400	IN	DNSKEY	256	3	5	AQPSKmynfzW4kyBv015MUG2DeIQ3Cbl+BBZH4b/0PY1kxkmvHjcZc8nokfzj31GajIQKY+5CptLr3buXA10hWqTkF7H6RfoRqXQeogmMHfpftf6zMv1LyBUgia7za6ZEzOJBOztyvhjL742iU/TpPSEDhm2SNKLijfUppn1UaNvv4w==
+ds1.test-zone.db		IN	DS	31528	5	1	2274EACD70C5CD6862E1C0262E99D48D9FDEC271
+ds2.test-zone.db		IN	DS	31528	5	1	2BB183AF5F22588179A53B0A98631FAD1A292118
+test-zone.db		IN	MX	10	mail.test-zone.db
+www.test-zone.db		IN	MX	10	10.0.0.4.test-zone.db
+urn.example.com		IN	NAPTR	100	50	"s"	"http+N2L+N2C+N2R"	""	www.example.com
+alfa.example.com	86400	IN	NSEC	host.example.com.	A MX RRSIG NSEC TYPE1234
+alfa.example.com		IN	NSEC3	1	1	12	aabbccdd	2vptu5timamqttgl4luu7kg2leoaor3s	A RRSIG
+alfa.example.com		IN	NSEC3PARAM	1	0	12	aabbccdd
+12.23.21.23.in-addr.arpa.test-zone.db		IN	PTR	www.myhost.example.com
+host.example.com	86400	IN	RRSIG	A	5	3	86400	20030322173103	20030220173103	2642	example.com.	oJB1W6WNGv+ldvQ3WDG0MQkg5IEhjRip8WTrPYGv07h108dUKGMeDPKijVCHX3DDKdfb+v6oB9wfuh3DTJXUAfI/M0zmO/zz8bW0Rznl8O3tGNazPwQKkRN20XPXV6nwwfoXmJQbsLNrLfkGJ5D6fwFm8nN+6pBzeDQfsS3Ap3o=
+test-zone.db		IN	SPF	"v=spf1 mx ~all"
+www.test-zone.db		IN	SPF	"v=spf1 -all"
+elsewhere.test-zone.db		IN	SPF	"v=spf1 mx ?all"
+_sip._tcp.example.com	86400	IN	SRV	0	5	5060	sipserver.example.com
+_443._tcp.www.example.com	86400	IN	TLSA	1	1	2	92003ba34942dc74152e2f2c408d29ec a5a520e7f2e06bb944f4dca346baf63c 1b177615d466f6c4b71c216a50292bd5 8c9ebdd2f74e38fe51ffd48c43326cbc 
+
+www.test-zone.db		IN	TXT	"web;server"
+soup.test-zone.db		IN	TXT	"This is a text message"
+txta.test-zone.db		IN	TXT	"t=y; o=-"
+_kerberos.test-zone.db		IN	TXT	maxnet.ao
