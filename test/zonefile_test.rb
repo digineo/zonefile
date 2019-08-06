@@ -384,7 +384,6 @@ class TestZonefile < Minitest::Test #:nodoc:
   def test_resource_records
     subject = @zf.resource_records
 
-    expected = Pathname.new(__dir__).join("test-zone.rr").read
     actual = subject.each_with_object("") do |(k, rrs), str|
       rrs = [rrs] if k == :soa
       rrs.each do |rr|
@@ -392,6 +391,7 @@ class TestZonefile < Minitest::Test #:nodoc:
       end
     end
 
+    expected = Pathname.new(__dir__).join("test-zone.rr").read
     assert_equal expected, actual
     run_again_with_zf_output!
   end
@@ -399,7 +399,6 @@ class TestZonefile < Minitest::Test #:nodoc:
   def test_resource_records_powerdns
     subject = @zf.resource_records(powerdns_sql: true)
 
-    expected = Pathname.new(__dir__).join("test-zone.pdns").read
     actual = subject.each_with_object("") do |(k, rrs), str|
       rrs = [rrs] if k == :soa
       rrs.each do |rr|
@@ -407,6 +406,7 @@ class TestZonefile < Minitest::Test #:nodoc:
       end
     end
 
+    expected = Pathname.new(__dir__).join("test-zone.pdns").read
     assert_equal expected, actual
     # this won't work: run_again_with_zf_output!
   end

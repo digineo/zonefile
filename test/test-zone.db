@@ -69,3 +69,9 @@ example.com.      IN CAA 0 iodef "mailto:security@example.com"
 host.example.com. IN CAA 0 issue ";"
 
 expand 6H IN CNAME @
+
+; stress the parser a bit
+a in txt cname
+a in txt @
+cname in cname b
+ns in ns @

@@ -1,6 +1,7 @@
 @	3600	IN	SOA	ns0.dns-zoneparse-test.net.	support.dns-zoneparse-test.net.	2000100501	10800	3600	691200	86400
 	43200	IN	NS	ns0.dns-zoneparse-test.net.
 @		IN	NS	ns1.dns-zoneparse-test.net.
+ns		IN	NS	@
 @		IN	A	127.0.0.1
 localhost		IN	A	127.0.0.1
 mail		IN	A	127.0.0.1
@@ -13,6 +14,7 @@ mini		IN	A	10.0.0.7
 icarus		IN	AAAA	fe80::0260:83ff:fe7c:3a2a
 ftp		IN	CNAME	www
 expand	21600	IN	CNAME	@
+cname		IN	CNAME	b
 example.com.		IN	CAA	0	issue	"ca.example.com"
 example.com.		IN	CAA	0	iodef	"mailto:security@example.com"
 host.example.com.		IN	CAA	0	issue	";"
@@ -37,3 +39,5 @@ www		IN	TXT	"web;server"
 soup		IN	TXT	"This is a text message"
 txta		IN	TXT	"t=y; o=-"
 _kerberos		IN	TXT	maxnet.ao
+a		IN	TXT	cname
+a		IN	TXT	@

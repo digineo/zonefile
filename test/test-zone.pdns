@@ -1,6 +1,7 @@
 test-zone.db	3600	IN	SOA	ns0.dns-zoneparse-test.net.	support.dns-zoneparse-test.net.	2000100501	10800	3600	691200	86400
 test-zone.db	43200	IN	NS	ns0.dns-zoneparse-test.net
 test-zone.db		IN	NS	ns1.dns-zoneparse-test.net
+ns.test-zone.db		IN	NS	test-zone.db
 test-zone.db		IN	A	127.0.0.1
 localhost.test-zone.db		IN	A	127.0.0.1
 mail.test-zone.db		IN	A	127.0.0.1
@@ -13,6 +14,7 @@ mini.test-zone.db		IN	A	10.0.0.7
 icarus.test-zone.db		IN	AAAA	fe80::0260:83ff:fe7c:3a2a
 ftp.test-zone.db		IN	CNAME	www.test-zone.db
 expand.test-zone.db	21600	IN	CNAME	test-zone.db
+cname.test-zone.db		IN	CNAME	b.test-zone.db
 example.com		IN	CAA	0	issue	"ca.example.com"
 example.com		IN	CAA	0	iodef	"mailto:security@example.com"
 host.example.com		IN	CAA	0	issue	";"
@@ -37,3 +39,5 @@ www.test-zone.db		IN	TXT	"web;server"
 soup.test-zone.db		IN	TXT	"This is a text message"
 txta.test-zone.db		IN	TXT	"t=y; o=-"
 _kerberos.test-zone.db		IN	TXT	maxnet.ao
+a.test-zone.db		IN	TXT	cname
+a.test-zone.db		IN	TXT	@
