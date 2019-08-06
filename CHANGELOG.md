@@ -1,3 +1,9 @@
+# 2.2.1
+
+- Fixed a bug where the ZOnefile parser would trip over an RR like
+  `a in txt "whatever"` and drop the previous record (due to missing
+  regexp anchors).
+
 # 2.2.0
 
 - Zone file data exported with `#resource_records` now always include
