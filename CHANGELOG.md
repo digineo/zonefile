@@ -1,3 +1,19 @@
+# 2.2.0
+
+- Zone file data exported with `#resource_records` now always include
+  the RR class (which defaults to "IN", if not set).
+- `#resource_records` now accepts a `powerdns_sql: true` argument to
+  make working with PowerDNS SQL storage a bit easier:
+
+  - it replaces "@" with the origin
+  - names not ending in "." are suffixed with the origin (creating FQDNs)
+  - the final dot is removed
+
+  Note that this export mode is propably not RFC conform, but required
+  for manipulating data in one of PowerDNS's SQL storages.
+- finally added a `Rakefile` and `Gemfile` to ease local development
+
+
 # 2.1.1
 
 - TTL values are now also expanded when dumping records.

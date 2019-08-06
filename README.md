@@ -90,6 +90,17 @@ zf.new_serial
 puts "New Zonefile: \n#{zf.output}"
 ```
 
+# Hacking
+
+To get started, run these commands:
+
+```console
+$ git clone git@github.com:digineo/zonefile.git
+$ cd zonefile
+$ bundle install
+$ rake # invokes test + rubocop
+```
+
 # License
 
 MIT License

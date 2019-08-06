@@ -691,7 +691,7 @@ class Zonefile
       @records[name].each do |item|
         item = expand_dot_content(type, item) if powerdns_sql
 
-        rr = RR.new(item[:name], expand_ttl(item[:ttl]), (item[:class] || "IN" ).upcase, type)
+        rr = RR.new(item[:name], expand_ttl(item[:ttl]), (item[:class] || "IN").upcase, type)
         rr.data = fields.map {|f| item[f] }.join("\t")
         rrs[type] ||= []
         rrs[type] << rr
