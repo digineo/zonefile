@@ -1,5 +1,7 @@
 # Ruby Zonefile - Parse and manipulate DNS Zone Files.
 
+[![CircleCI](https://circleci.com/gh/digineo/zonefile.svg?style=svg)](https://circleci.com/gh/digineo/zonefile)
+
 ## Description
 
 This class can read, manipulate and create DNS zone files. It
