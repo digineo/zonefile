@@ -29,7 +29,7 @@ class TestZonefile < Minitest::Test #:nodoc:
   end
 
   def teardown
-    return # if $zf_output_shown || failures.empty?
+    return if $zf_output_shown || failures.empty?
 
     $zf_output_shown = true
     puts "\n\e[35m" << @zf.output << "\e[0m"
@@ -90,18 +90,31 @@ class TestZonefile < Minitest::Test #:nodoc:
   end
 
   def test_setter
-    data = [{ class: "IN", name: "123", host: "test" },
-            { name: "321", hosts: "test2" }]
+    data = [
+      { class: "IN", name: "123", host: "test" },
+      { name: "321", hosts: "test2" },
+    ]
     @zf.ptr = data
-    assert_equal 2, @zf.ptr.size
-    assert @zf.ptr[0][:host] == data[0][:host]
-    assert @zf.ptr[1][:name] == data[1][:name]
+    assert_equal data, @zf.ptr
+
     assert_raises(NoMethodError) do
       @zf.dont_exist(123, 123, 123)
     end
   end
 
   def test_soa
+    assert_equal({
+      origin:     "@",
+      ttl:        3600,
+      primary:    "ns0.dns-zoneparse-test.net.",
+      email:      "support.dns-zoneparse-test.net.",
+      serial:     "2000100501",
+      refresh:    10800,
+      retry:      3600,
+      expire:     691200,
+      minimumTTL: 86400,
+    }, @zf.soa)
+
     assert_equal 86400, @zf.soa[:minimumTTL]
     assert_equal 691200, @zf.soa[:expire]
     assert_equal 3600, @zf.soa[:retry]
@@ -114,86 +127,91 @@ class TestZonefile < Minitest::Test #:nodoc:
   end
 
   def test_a
-    assert_equal 9,           @zf.a.size
-    assert_equal "mini",      @zf.a.last[:name]
-    assert_equal "10.0.0.7",  @zf.a.last[:host]
-    assert_equal "127.0.0.1", @zf.a.first[:host]
-
-    a = @zf.a.find {|rr| rr[:host] == "10.0.0.3" }
-    assert_equal 43200, a[:ttl]
-    assert_equal "www", a[:name].to_s # name preserved
+    assert_equal([
+      { name: "@",         ttl: nil,   class: "IN", host: "127.0.0.1" },
+      { name: "localhost", ttl: nil,   class: "IN", host: "127.0.0.1" },
+      { name: "mail",      ttl: nil,   class: "IN", host: "127.0.0.1" },
+      { name: "www",       ttl: nil,   class: "IN", host: "127.0.0.1" },
+      { name: "www",       ttl: nil,   class: "in", host: "10.0.0.2" },
+      { name: "www",       ttl: 43200, class: "IN", host: "10.0.0.3" }, # name preserved
+      { name: "www",       ttl: nil,   class: nil,  host: "10.0.0.5" },
+      { name: "foo",       ttl: nil,   class: "IN", host: "10.0.0.6" },
+      { name: "mini",      ttl: nil,   class: nil,  host: "10.0.0.7" },
+    ], @zf.a)
 
     run_again_with_zf_output!
   end
 
   def test_mx
-    assert_equal 2, @zf.mx.size
-    assert_equal 10, @zf.mx.first[:pri]
+    assert_equal([
+      { name: "@",   ttl: nil, class: "IN", host: "mail",     pri: 10 },
+      { name: "www", ttl: nil, class: "IN", host: "10.0.0.4", pri: 10 },
+    ], @zf.mx)
 
     run_again_with_zf_output!
   end
 
   def test_cname
-    www = @zf.cname.find {|rr| rr[:host] == "www" }
-    refute_nil www
+    assert_equal([
+      { name: "ftp",    ttl: nil,   class: "IN", host: "www" },
+      { name: "expand", ttl: 21600, class: "IN", host: "@" },
+      { name: "cname",  ttl: nil,   class: "in", host: "b" },
+    ], @zf.cname)
 
     run_again_with_zf_output!
   end
 
   def test_ns
-    assert_equal "ns0.dns-zoneparse-test.net.", @zf.ns[0][:host]
-    assert_equal "ns1.dns-zoneparse-test.net.", @zf.ns[1][:host]
+    assert_equal([
+      { name: nil,  ttl: 43200, class: "IN", host: "ns0.dns-zoneparse-test.net." },
+      { name: "@",  ttl: nil,   class: "IN", host: "ns1.dns-zoneparse-test.net." },
+      { name: "ns", ttl: nil,   class: "in", host: "@" },
+    ], @zf.ns)
 
     run_again_with_zf_output!
   end
 
   def test_txt
-    # puts @zf.txt.inspect
-    assert_equal '"web;server"', @zf.txt[0][:text]
-    assert_equal "IN", @zf.txt[1][:class]
-    assert_equal "soup", @zf.txt[1][:name]
-    assert_equal "txta", @zf.txt[2][:name]
-    assert_equal "IN", @zf.txt[3][:class]
-    assert_equal "\"t=y; o=-\"", @zf.txt[2][:text]
-    assert_equal "maxnet.ao", @zf.txt[3][:text]
-    assert_equal "_kerberos", @zf.txt[3][:name]
-
-    assert_equal 4, @zf.txt.size
+    assert_equal([
+      { name: "www",       ttl: nil, class: nil,  text: '"web;server"' },
+      { name: "soup",      ttl: nil, class: "IN", text: '"This is a text message"' },
+      { name: "txta",      ttl: nil, class: nil,  text: '"t=y; o=-"' },
+      { name: "_kerberos", ttl: nil, class: "IN", text: "maxnet.ao" },
+      { name: "a",         ttl: nil, class: "in", text: "cname" },
+      { name: "a",         ttl: nil, class: "in", text: "@" },
+    ], @zf.txt)
 
     run_again_with_zf_output!
   end
 
   def test_spf
-    assert_equal '"v=spf1 mx ~all"', @zf.spf[0][:text]
-    assert_equal "IN", @zf.spf[0][:class]
-    assert_equal "@", @zf.spf[0][:name]
-    assert_equal '"v=spf1 -all"', @zf.spf[1][:text]
-    assert_equal "www", @zf.spf[1][:name]
-    assert_nil @zf.spf[1][:class]
-    assert_equal "elsewhere", @zf.spf[2][:name]
-    assert_equal '"v=spf1 mx ?all"', @zf.spf[2][:text]
-
-    assert_equal 3, @zf.spf.size
+    assert_equal([
+      { name: "@",         ttl: nil, class: "IN", text: '"v=spf1 mx ~all"' },
+      { name: "www",       ttl: nil, class: nil,  text: '"v=spf1 -all"' },
+      { name: "elsewhere", ttl: nil, class: "IN", text: '"v=spf1 mx ?all"' },
+    ], @zf.spf)
 
     run_again_with_zf_output!
   end
 
   def test_a4
-    assert_equal "icarus", @zf.a4[0][:name]
-    assert_equal "IN", @zf.a4[0][:class]
-    assert_equal 1, @zf.a4.size
-    assert_equal "fe80::0260:83ff:fe7c:3a2a", @zf.a4[0][:host]
+    assert_equal([
+      { name: "icarus", ttl: nil, class: "IN", host: "fe80::0260:83ff:fe7c:3a2a" },
+    ], @zf.a4)
 
     run_again_with_zf_output!
   end
 
   def test_srv
-    assert_equal "_sip._tcp.example.com.", @zf.srv[0][:name]
-    assert_equal 86400, @zf.srv[0][:ttl]
-    assert_equal "0", @zf.srv[0][:pri]
-    assert_equal "5", @zf.srv[0][:weight]
-    assert_equal "5060", @zf.srv[0][:port]
-    assert_equal "sipserver.example.com.", @zf.srv[0][:host]
+    assert_equal([{
+      name:   "_sip._tcp.example.com.",
+      ttl:    86400,
+      class:  "IN",
+      pri:    "0",
+      weight: "5",
+      port:   "5060",
+      host:   "sipserver.example.com."
+    }], @zf.srv)
 
     run_again_with_zf_output!
   end
@@ -213,127 +231,136 @@ class TestZonefile < Minitest::Test #:nodoc:
   end
 
   def test_ptr
-    assert_equal "12.23.21.23.in-addr.arpa", @zf.ptr[0][:name]
-    assert_equal "www.myhost.example.com.",  @zf.ptr[0][:host]
+    assert_equal([{
+      name:   "12.23.21.23.in-addr.arpa",
+      ttl:    nil,
+      class:  "IN",
+      host:   "www.myhost.example.com."
+    }], @zf.ptr)
 
     run_again_with_zf_output!
   end
 
   def test_ds
-    assert_equal "ds1", @zf.ds[0][:name]
-    assert_equal 31528, @zf.ds[0][:key_tag]
-    assert_equal "5", @zf.ds[0][:algorithm]
-    assert_equal 1, @zf.ds[0][:digest_type]
-    assert_equal "2274EACD70C5CD6862E1C0262E99D48D9FDEC271", @zf.ds[0][:digest]
-    assert_equal "ds2", @zf.ds[1][:name]
-    assert_equal 31528, @zf.ds[1][:key_tag]
-    assert_equal "5", @zf.ds[1][:algorithm]
-    assert_equal 1, @zf.ds[1][:digest_type]
-    assert_equal "2BB183AF5F22588179A53B0A98631FAD1A292118", @zf.ds[1][:digest]
+    assert_equal([
+      { name: "ds1", ttl: nil, class: "IN", key_tag: 31528, algorithm: "5", digest_type: 1, digest: "2274EACD70C5CD6862E1C0262E99D48D9FDEC271" },
+      { name: "ds2", ttl: nil, class: "IN", key_tag: 31528, algorithm: "5", digest_type: 1, digest: "2BB183AF5F22588179A53B0A98631FAD1A292118" },
+    ], @zf.ds)
 
     run_again_with_zf_output!
   end
 
   def test_nsec
-    assert_equal "alfa.example.com.", @zf.nsec[0][:name]
-    assert_equal "host.example.com.", @zf.nsec[0][:next]
-    assert_equal "A MX RRSIG NSEC TYPE1234", @zf.nsec[0][:types]
+    assert_equal([
+      { name: "alfa.example.com.", ttl: 86400, class: "IN", next: "host.example.com.", types: "A MX RRSIG NSEC TYPE1234"},
+    ], @zf.nsec)
 
     run_again_with_zf_output!
   end
 
   def test_nsec3
-    assert_equal "1", @zf.nsec3[0][:algorithm]
-    assert_equal "1", @zf.nsec3[0][:flags]
-    assert_equal "12", @zf.nsec3[0][:iterations]
-    assert_equal "aabbccdd", @zf.nsec3[0][:salt]
-    assert_equal "2vptu5timamqttgl4luu7kg2leoaor3s", @zf.nsec3[0][:next]
-    assert_equal "A RRSIG", @zf.nsec3[0][:types]
+    assert_equal([{
+      name:       "alfa.example.com.",
+      ttl:        nil,
+      class:      "IN",
+      algorithm:  "1",
+      flags:      "1",
+      iterations: "12",
+      salt:       "aabbccdd",
+      next:       "2vptu5timamqttgl4luu7kg2leoaor3s",
+      types:      "A RRSIG",
+    }], @zf.nsec3)
 
     run_again_with_zf_output!
   end
 
   def test_nsec3param
-    assert_equal "1", @zf.nsec3param[0][:algorithm]
-    assert_equal "0", @zf.nsec3param[0][:flags]
-    assert_equal "12", @zf.nsec3param[0][:iterations]
-    assert_equal "aabbccdd", @zf.nsec3param[0][:salt]
+    assert_equal([{
+      name:       "alfa.example.com.",
+      ttl:        nil,
+      class:      "IN",
+      algorithm:  "1",
+      flags:      "0",
+      iterations: "12",
+      salt:       "aabbccdd",
+    }], @zf.nsec3param)
 
     run_again_with_zf_output!
   end
 
   def test_naptr
-    assert_equal "urn.example.com.", @zf.naptr[0][:name]
-    assert_equal 100, @zf.naptr[0][:order]
-    assert_equal 50, @zf.naptr[0][:preference]
-    assert_equal "\"s\"", @zf.naptr[0][:flags]
-    assert_equal "\"http+N2L+N2C+N2R\"", @zf.naptr[0][:service]
-    assert_equal "\"\"", @zf.naptr[0][:regexp]
-    assert_equal "www.example.com.", @zf.naptr[0][:replacement]
+    assert_equal([{
+      name:        "urn.example.com.",
+      ttl:         nil,
+      class:       "IN",
+      order:       100,
+      preference:  50,
+      flags:       '"s"',
+      service:     '"http+N2L+N2C+N2R"',
+      regexp:      '""',
+      replacement: "www.example.com.",
+    }], @zf.naptr)
 
     run_again_with_zf_output!
   end
 
   def test_dnskey
-    assert_equal "example.com.", @zf.dnskey[0][:name]
-    assert_equal 256, @zf.dnskey[0][:flag]
-    assert_equal 3, @zf.dnskey[0][:protocol]
-    assert_equal "5", @zf.dnskey[0][:algorithm]
     pkey = <<~PUBLIC_KEY.gsub(/\s+/, "").strip
-      AQPSKmynfzW4kyBv015MUG2DeIQ3
-      Cbl+BBZH4b/0PY1kxkmvHjcZc8no
-      kfzj31GajIQKY+5CptLr3buXA10h
-      WqTkF7H6RfoRqXQeogmMHfpftf6z
-      Mv1LyBUgia7za6ZEzOJBOztyvhjL
-      742iU/TpPSEDhm2SNKLijfUppn1U
-      aNvv4w==
+      AQPSKmynfzW4kyBv015MUG2DeIQ3Cbl+BBZH4b/0PY1kxkmvHjcZc8nokfzj31GajI
+      QKY+5CptLr3buXA10hWqTkF7H6RfoRqXQeogmMHfpftf6zMv1LyBUgia7za6ZEzOJB
+      OztyvhjL742iU/TpPSEDhm2SNKLijfUppn1UaNvv4w==
     PUBLIC_KEY
-    assert_equal pkey, @zf.dnskey[0][:public_key]
-    assert_equal "example.net.", @zf.dnskey[1][:name]
-    assert_equal 256, @zf.dnskey[1][:flag]
-    assert_equal 3, @zf.dnskey[1][:protocol]
-    assert_equal "5", @zf.dnskey[1][:algorithm]
-    assert_equal pkey, @zf.dnskey[1][:public_key]
+
+    assert_equal([
+      { name: "example.com.", ttl: 86400, class: "IN", flag: 256, protocol: 3, algorithm: "5", public_key: pkey },
+      { name: "example.net.", ttl: 86400, class: "IN", flag: 256, protocol: 3, algorithm: "5", public_key: pkey },
+    ], @zf.dnskey)
 
     run_again_with_zf_output!
   end
 
   def test_rrsig
-    assert_equal "host.example.com.", @zf.rrsig[0][:name]
-    assert_equal "A", @zf.rrsig[0][:type_covered]
-    assert_equal "5", @zf.rrsig[0][:algorithm]
-    assert_equal 3, @zf.rrsig[0][:labels]
-    assert_equal 86400, @zf.rrsig[0][:original_ttl]
-    assert_equal 2003_03_22_17_31_03, @zf.rrsig[0][:expiration]
-    assert_equal 2003_02_20_17_31_03, @zf.rrsig[0][:inception]
-    assert_equal 2642, @zf.rrsig[0][:key_tag]
-    assert_equal "example.com.", @zf.rrsig[0][:signer]
     sig = <<~SIGNATURE.gsub(/\s+/, "").strip
-      oJB1W6WNGv+ldvQ3WDG0MQkg5IEhjRip8WTr
-      PYGv07h108dUKGMeDPKijVCHX3DDKdfb+v6o
-      B9wfuh3DTJXUAfI/M0zmO/zz8bW0Rznl8O3t
-      GNazPwQKkRN20XPXV6nwwfoXmJQbsLNrLfkG
-      J5D6fwFm8nN+6pBzeDQfsS3Ap3o=
+      oJB1W6WNGv+ldvQ3WDG0MQkg5IEhjRip8WTrPYGv07h108dUKGMeDPKijVCHX3DDKd
+      fb+v6oB9wfuh3DTJXUAfI/M0zmO/zz8bW0Rznl8O3tGNazPwQKkRN20XPXV6nwwfoX
+      mJQbsLNrLfkGJ5D6fwFm8nN+6pBzeDQfsS3Ap3o=
     SIGNATURE
-    assert_equal sig, @zf.rrsig[0][:signature]
+
+    assert_equal([{
+      name:         "host.example.com.",
+      ttl:          86400,
+      class:        "IN",
+      type_covered: "A",
+      algorithm:    "5",
+      labels:       3,
+      original_ttl: 86400,
+      expiration:   20030322173103,
+      inception:    20030220173103,
+      key_tag:      2642,
+      signer:       "example.com.",
+      signature:    sig,
+    }], @zf.rrsig)
 
     run_again_with_zf_output!
   end
 
   def test_tlsa
-    assert_equal "_443._tcp.www.example.com.", @zf.tlsa[0][:name]
-    assert_equal 86400, @zf.srv[0][:ttl]
-    assert_equal 1, @zf.tlsa[0][:certificate_usage]
-    assert_equal 1, @zf.tlsa[0][:selector]
-    assert_equal 2, @zf.tlsa[0][:matching_type]
-
-    sig = <<~SIGNATURE.gsub(/\s+/, "").strip
+    sig = <<~SIGNATURE.gsub("\n", " ").strip
       92003ba34942dc74152e2f2c408d29ec
       a5a520e7f2e06bb944f4dca346baf63c
       1b177615d466f6c4b71c216a50292bd5
       8c9ebdd2f74e38fe51ffd48c43326cbc
     SIGNATURE
-    assert_equal sig, @zf.tlsa[0][:data].gsub(/\s+/, "")
+
+    assert_equal([{
+      name:              "_443._tcp.www.example.com.",
+      ttl:               86400,
+      class:             "IN",
+      certificate_usage: 1,
+      selector:          1,
+      matching_type:     2,
+      data:              sig,
+    }], @zf.tlsa)
 
     run_again_with_zf_output!
   end
@@ -345,20 +372,11 @@ class TestZonefile < Minitest::Test #:nodoc:
   end
 
   def test_caa
-    assert_equal "example.com.", @zf.caa[0][:name]
-    assert_equal 0, @zf.caa[0][:flag]
-    assert_equal "issue", @zf.caa[0][:tag]
-    assert_equal '"ca.example.com"', @zf.caa[0][:value]
-
-    assert_equal "example.com.", @zf.caa[1][:name]
-    assert_equal 0, @zf.caa[1][:flag]
-    assert_equal "iodef", @zf.caa[1][:tag]
-    assert_equal '"mailto:security@example.com"', @zf.caa[1][:value]
-
-    assert_equal "host.example.com.", @zf.caa[2][:name]
-    assert_equal 0, @zf.caa[2][:flag]
-    assert_equal "issue", @zf.caa[2][:tag]
-    assert_equal '";"', @zf.caa[2][:value]
+    assert_equal([
+      { name: "example.com.",      ttl: nil, class: "IN", flag: 0, tag: "issue", value: '"ca.example.com"' },
+      { name: "example.com.",      ttl: nil, class: "IN", flag: 0, tag: "iodef", value: '"mailto:security@example.com"' },
+      { name: "host.example.com.", ttl: nil, class: "IN", flag: 0, tag: "issue", value: '";"' },
+    ], @zf.caa)
 
     run_again_with_zf_output!
   end

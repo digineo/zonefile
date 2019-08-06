@@ -32,8 +32,7 @@ test-zone.db		IN	SPF	"v=spf1 mx ~all"
 www.test-zone.db		IN	SPF	"v=spf1 -all"
 elsewhere.test-zone.db		IN	SPF	"v=spf1 mx ?all"
 _sip._tcp.example.com	86400	IN	SRV	0	5	5060	sipserver.example.com
-_443._tcp.www.example.com	86400	IN	TLSA	1	1	2	92003ba34942dc74152e2f2c408d29ec a5a520e7f2e06bb944f4dca346baf63c 1b177615d466f6c4b71c216a50292bd5 8c9ebdd2f74e38fe51ffd48c43326cbc 
-
+_443._tcp.www.example.com	86400	IN	TLSA	1	1	2	92003ba34942dc74152e2f2c408d29ec a5a520e7f2e06bb944f4dca346baf63c 1b177615d466f6c4b71c216a50292bd5 8c9ebdd2f74e38fe51ffd48c43326cbc
 www.test-zone.db		IN	TXT	"web;server"
 soup.test-zone.db		IN	TXT	"This is a text message"
 txta.test-zone.db		IN	TXT	"t=y; o=-"
