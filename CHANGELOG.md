@@ -1,6 +1,12 @@
+# 2.2.2
+
+- Fixed SOA output for `#resource_records(powerdns_sql: true)`. Previously,
+  this returned primary and email fields unmodified (i.e. possibly with
+  trailing dot).
+
 # 2.2.1
 
-- Fixed a bug where the ZOnefile parser would trip over an RR like
+- Fixed a bug where the Zonefile parser would trip over an RR like
   `a in txt "whatever"` and drop the previous record (due to missing
   regexp anchors).
 
