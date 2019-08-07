@@ -701,15 +701,18 @@ class Zonefile
     soa_origin = powerdns_sql ? expand_dot(soa[:origin]) : soa[:origin]
     rr_soa = RR.new(soa_origin, expand_ttl(soa[:ttl]), "IN", "SOA")
     rr_soa.data = {
-      primary:    false,
-      email:      false,
-      serial:     false,
-      refresh:    true,
-      retry:      true,
-      expire:     true,
-      minimumTTL: true,
+      primary:    (:dot if powerdns_sql),
+      email:      (:dot if powerdns_sql),
+      serial:     nil,
+      refresh:    :ttl,
+      retry:      :ttl,
+      expire:     :ttl,
+      minimumTTL: :ttl,
     }.map {|f, expand|
-      expand ? expand_ttl(soa[f]) : soa[f]
+      val = soa[f]
+      val = expand_dot(val) if expand == :dot
+      val = expand_ttl(val) if expand == :ttl
+      val
     }.join("\t")
 
     RECORDS.each_with_object(soa: rr_soa) do |(name, (type, *fields)), rrs|

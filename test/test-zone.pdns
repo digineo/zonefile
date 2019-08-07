@@ -1,4 +1,4 @@
-test-zone.db	3600	IN	SOA	ns0.dns-zoneparse-test.net.	support.dns-zoneparse-test.net.	2000100501	10800	3600	691200	86400
+test-zone.db	3600	IN	SOA	ns0.dns-zoneparse-test.net	support.dns-zoneparse-test.net	2000100501	10800	3600	691200	86400
 test-zone.db	43200	IN	NS	ns0.dns-zoneparse-test.net
 test-zone.db		IN	NS	ns1.dns-zoneparse-test.net
 ns.test-zone.db		IN	NS	test-zone.db
