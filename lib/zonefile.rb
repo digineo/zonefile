@@ -660,14 +660,17 @@ class Zonefile
 
   # Build a new nicely formatted Zonefile
   def output
-    out = <<~ENDH
+    out = <<~ZONE
       ;
       ; Database file #{@filename || 'unknown'} for #{@origin || 'unknown'} zone.
       ; Zone version: #{soa[:serial]}
       ;
-      #{@origin ? "$ORIGIN #{@origin}." : ''}
-      #{@ttl ? "$TTL #{@ttl}" : ''}
+    ZONE
 
+    out << "$ORIGIN #{@origin}.\n" if @origin
+    out << "$TTL #{@ttl}\n"        if @ttl
+
+    out << "\n" << <<~ZONE
       #{soa[:origin]}\t#{soa[:ttl]}\tIN\tSOA\t(
       \t\t\t\t\t#{soa[:primary]}\t; primary
       \t\t\t\t\t#{soa[:email]}\t; email
@@ -677,7 +680,7 @@ class Zonefile
       \t\t\t\t\t#{soa[:expire]}\t; expire
       \t\t\t\t\t#{soa[:minimumTTL]}\t; minimum TTL
       \t\t\t\t)
-    ENDH
+    ZONE
 
     RECORDS.each do |name, (type, *fields)|
       out << format_rr(name, type, *fields)
