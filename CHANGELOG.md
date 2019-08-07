@@ -1,3 +1,8 @@
+# 2.2.3
+
+- Fixed `#resource_records(powerdns_sql: true)` being destructive.
+  Creating the PowerDNS output caused the internal RR set being mutated.
+
 # 2.2.2
 
 - Fixed SOA output for `#resource_records(powerdns_sql: true)`. Previously,

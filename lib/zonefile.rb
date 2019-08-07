@@ -745,6 +745,7 @@ class Zonefile
   private_constant :DOT_CONTENT
 
   def expand_dot_content(type, item)
+    item = item.clone
     item[:name] = expand_dot item[:name]
     DOT_CONTENT.fetch(type, []).each do |f|
       item[f] = expand_dot item[f]

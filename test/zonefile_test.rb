@@ -402,4 +402,12 @@ class TestZonefile < Minitest::Test #:nodoc:
     assert_equal expected, actual
     # this won't work: run_again_with_zf_output!
   end
+
+  def test_expand_dot_content_doesnt_mutate_data
+    # The method #expand_dot_content is private, but we can observe its
+    # effects when walking through the RR set with #resource_records.
+    # Remove `item = item.clone` from #expand_dot_content to see this fail.
+    @zf.resource_records(powerdns_sql: true)
+    test_resource_records_powerdns
+  end
 end
