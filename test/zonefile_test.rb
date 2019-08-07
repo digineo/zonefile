@@ -115,14 +115,6 @@ class TestZonefile < Minitest::Test #:nodoc:
       minimumTTL: 86400,
     }, @zf.soa)
 
-    assert_equal 86400, @zf.soa[:minimumTTL]
-    assert_equal 691200, @zf.soa[:expire]
-    assert_equal 3600, @zf.soa[:retry]
-    assert_equal 10800, @zf.soa[:refresh]
-    assert_equal "2000100501", @zf.soa[:serial]
-    assert_equal "support.dns-zoneparse-test.net.", @zf.soa[:email]
-    assert_equal "ns0.dns-zoneparse-test.net.", @zf.soa[:primary]
-
     run_again_with_zf_output!
   end
 
